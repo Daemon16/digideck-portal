@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-digi-dark text-white;
+    font-family: 'Orbitron', monospace;
+  }
+}
+
+@layer components {
+  .digi-card {
+    @apply bg-gradient-to-br from-digi-gray to-digi-dark border border-digi-blue/30 rounded-lg p-4 hover:border-digi-blue/60 transition-all duration-300 hover:shadow-lg hover:shadow-digi-blue/20;
+  }
+  
+  .digi-button {
+    @apply bg-gradient-to-r from-digi-blue to-digi-purple text-white px-6 py-3 rounded-lg font-bold hover:from-digi-purple hover:to-digi-blue transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-digi-blue/30;
+  }
+  
+  .digi-input {
+    @apply bg-digi-gray border border-digi-blue/30 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:border-digi-blue focus:outline-none focus:ring-2 focus:ring-digi-blue/20;
+  }
+  
+  .digi-glow {
+    @apply animate-glow;
+  }
+}
