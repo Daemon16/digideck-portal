@@ -1,2 +1,26 @@
 node_modules
-scripts/*
+
+# Environment variables
+.env
+.env.local
+.env.production
+
+# Build output
+dist/
+build/
+
+# Scripts (contains scraping logic)
+scripts/
+
+# Firebase
+.firebase/
+firebase-debug.log
+firebase.json
+firebase.indexes.json
+firestore.rules
+pglite-debug.log
+setup.sh
+
+# IDE
+.vscode/
+.idea/

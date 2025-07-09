@@ -1,67 +1,54 @@
 # DigiDeck Portal
 
-A fully functional, scalable Digimon TCG companion platform built with React, TypeScript, Vite, Firebase, and Three.js. Features live tournament data, immersive 3D experiences, and comprehensive meta analysis.
+A modern Digimon TCG companion platform built with React, TypeScript, Vite, and Firebase. Features tournament data analysis, user profiles with achievements, and an immersive Cyber Sleuth-inspired design.
 
 ## 🚀 Features
 
 ### Core Functionality
-- **Live Card Database**: Real-time Digimon TCG card data with advanced search and filtering
-- **Tournament Meta Analysis**: Live tournament results and deck performance tracking
-- **Immersive 3D Experience**: Digital World background with Three.js animations
-- **Data-Driven Insights**: Charts, graphs, and analytics from real competitive data
+- **Live Card Database**: Searchable Digimon TCG card database with advanced filtering
+- **Tournament Meta Analysis**: Real tournament deck analysis and performance tracking
+- **User Profiles**: Firebase Authentication with activity tracking and achievements
+- **Digital Portal**: Animated loading experience with hexagonal tech design
+- **Cyber Sleuth Theme**: Teal/orange color scheme with futuristic UI elements
 
 ### Pages & Tools
-- `/cards` - Searchable card database with filters
-- `/meta` - Tournament results and archetype analysis  
-- `/intel` - Performance dashboards and trend analysis
-- `/radar` - Regional meta breakdown by archetype
-- `/synergy` - Card combination analysis from real decks
-- `/tools` - Deck building utilities and calculators
-- `/profile` - User profiles with evolving partner Digimon
-- `/chaos` - Challenge mode with randomized constraints
+- `/cards` - Searchable card database with modal details
+- `/meta` - Tournament deck analysis by set with load more functionality
+- `/intel` - Meta statistics and top archetype breakdowns
+- `/radar` - Regional tournament performance analysis
+- `/profile` - User authentication, stats tracking, and partner evolution
+- `/tools` - Deck building utilities (coming soon)
+- `/synergy` - Card combination analysis (coming soon)
 
 ## 🛠️ Tech Stack
 
 - **Frontend**: React 18, TypeScript, Vite
-- **Styling**: Tailwind CSS with custom Digimon theme
-- **3D Graphics**: Three.js with React Three Fiber
-- **Backend**: Firebase (Firestore, Functions, Hosting)
-- **Data Sources**: Live scraping from Digimon card databases and tournament sites
+- **Styling**: Mantine UI with custom Cyber Sleuth theme
+- **Backend**: Firebase (Firestore, Authentication)
 - **Animations**: Framer Motion for smooth transitions
+- **Deployment**: Vercel with environment variables
+- **Data**: Tournament data from Digimon Meta sources
 
 ## 📦 Installation
 
 1. **Clone and install dependencies**:
 ```bash
 git clone <repository-url>
-cd digideck-portal
+cd digideck-portal/src/digideck-portal
 npm install
 ```
 
-2. **Set up Firebase**:
-```bash
-# Install Firebase CLI
-npm install -g firebase-tools
-
-# Login to Firebase
-firebase login
-
-# Initialize Firebase project
-firebase init
-```
-
-3. **Configure environment variables**:
+2. **Configure environment variables**:
 ```bash
 cp .env.example .env
 # Edit .env with your Firebase configuration
 ```
 
-4. **Install Functions dependencies**:
-```bash
-cd functions
-npm install
-cd ..
-```
+3. **Set up Firebase**:
+- Create a Firebase project
+- Enable Authentication (Email/Password)
+- Create Firestore database
+- Deploy security rules: `firebase deploy --only firestore:rules`
 
 ## 🔧 Development
 
@@ -70,108 +57,107 @@ cd ..
 npm run dev
 ```
 
-### Run data scrapers locally:
+### Build for production:
 ```bash
-npm run scrape:cards
-npm run scrape:decks
-```
-
-### Test Firebase Functions locally:
-```bash
-cd functions
-npm run serve
+npm run build
 ```
 
 ## 🚀 Deployment
 
-### Build and deploy to Firebase:
+### Deploy to Vercel:
 ```bash
-npm run deploy
+# Install Vercel CLI
+npm install -g vercel
+
+# Deploy
+vercel
+
+# Add environment variables in Vercel dashboard
+# Redeploy with production flag
+vercel --prod
 ```
 
-### Deploy functions only:
-```bash
-cd functions
-npm run deploy
-```
+### Firebase Setup:
+- Add your Vercel domain to Firebase authorized domains
+- Deploy Firestore rules: `firebase deploy --only firestore:rules`
 
 ## 📊 Data Sources
 
-### Card Data
-- Primary: `https://digimoncard.dev/cards`
-- Backup: Community card databases
-- Updates: Daily via Firebase Functions
-
 ### Tournament Data  
-- Primary: `https://digimonmeta.com/tournaments`
-- Secondary: `https://play.limitlesstcg.com/tournaments`
-- Updates: Daily post-tournament via automated scraping
+- Primary: Digimon Meta tournament results
+- Processing: Real-time deck analysis and statistics
+- Storage: Firebase Firestore with optimized queries
 
 ## 🎨 Design System
 
-### Colors
-- **Primary Blue**: `#00a8ff` (digi-blue)
-- **Secondary Orange**: `#ff6b35` (digi-orange)  
-- **Accent Purple**: `#8b5cf6` (digi-purple)
-- **Success Green**: `#00d2d3` (digi-green)
-- **Dark Background**: `#0f0f23` (digi-dark)
-- **Card Background**: `#1a1a2e` (digi-gray)
+### Cyber Sleuth Theme
+- **Primary Teal**: `#00d2d3` (cyber-cyan)
+- **Secondary Orange**: `#ff6b35` (cyber-orange)  
+- **Accent Purple**: `#8b5cf6` (cyber-purple)
+- **Dark Background**: `#0f0f23` to `#1a1a2e` gradients
+- **Glass Effects**: Backdrop blur with translucent cards
 
 ### Components
-- **digi-card**: Standard card component with hover effects
-- **digi-button**: Gradient buttons with animations
-- **digi-input**: Themed form inputs
-- **digi-glow**: Glowing animation utility
+- **Digital Portal**: Hexagonal loading animation
+- **Cyber Cards**: Glass morphism with gradient borders
+- **Tech Particles**: Animated geometric elements
+- **Gradient Buttons**: Cyber-themed interactive elements
 
 ## 🔄 Data Flow
 
-1. **Scraping Pipeline**: Firebase Functions run daily to fetch fresh data
-2. **Data Storage**: Firestore collections for cards, decks, and meta data
-3. **Real-time Updates**: Live sync between database and frontend
-4. **Caching**: Optimized queries with Firestore indexes
+1. **User Authentication**: Firebase Auth with email/password
+2. **Activity Tracking**: Real-time stats for cards viewed and decks analyzed
+3. **Achievement System**: Unlockable achievements based on user activity
+4. **Data Storage**: Firestore collections with security rules
 
 ## 📱 Responsive Design
 
-- Mobile-first approach with Tailwind CSS
-- Responsive navigation with mobile menu
-- Optimized card layouts for all screen sizes
-- Touch-friendly interactions
+- Mobile-first approach with Mantine UI
+- Responsive grid layouts for all screen sizes
+- Touch-friendly interactions and hover effects
+- Optimized animations for mobile devices
 
-## 🎮 3D Features
+## 🎮 Visual Features
 
-### EggLoader
-- Animated DigiEgg with cracking sequence
-- Particle effects and lighting
+### Digital Portal
+- Hexagonal tech portal animation
+- Multi-stage loading sequence
+- Cyber-themed particle effects
 - Smooth transition to main app
 
-### Digital World Background
-- Floating digital particles
-- Orbiting wireframe objects
-- Animated grid with fog effects
-- Parallax scrolling elements
+### Cyber Background
+- Animated digital grid patterns
+- Floating geometric particles
+- Scan line effects
+- Hexagonal UI elements
 
 ## 🔐 Security
 
-- Firestore security rules for data protection
+- Firestore security rules for user data protection
+- Firebase Authentication for secure user management
 - Environment variables for sensitive configuration
-- CORS configuration for API endpoints
-- Input validation and sanitization
+- User-specific data access controls
 
 ## 📈 Performance
 
 - Code splitting with React.lazy
-- Image optimization and lazy loading
-- Firestore query optimization with indexes
-- CDN delivery via Firebase Hosting
+- Optimized Firestore queries with pagination
+- Efficient state management with custom hooks
+- Fast deployment via Vercel CDN
 
 ## 🧪 Testing
 
 Run the development server and test core functionality:
 
-1. **Card Search**: Navigate to `/cards` and test filtering
-2. **Meta Analysis**: Check `/meta` for tournament data
-3. **3D Animations**: Verify loader and background animations
-4. **Responsive Design**: Test on mobile and desktop
+1. **User Registration**: Create account and verify profile
+2. **Card Search**: Navigate to `/cards` and test filtering
+3. **Meta Analysis**: Check `/meta` for tournament data
+4. **Activity Tracking**: Verify stats increment on interactions
+5. **Responsive Design**: Test on mobile and desktop
+
+## ⚖️ Legal
+
+Digimon and all related characters are trademarks of Bandai. This is an unofficial fan-made project not affiliated with or endorsed by Bandai, Toei Animation, or any official Digimon entity.
 
 ## 🤝 Contributing
 
@@ -189,9 +175,9 @@ This project is licensed under the MIT License.
 
 For issues or questions:
 1. Check the GitHub Issues page
-2. Review Firebase console for function logs
-3. Test data scraping endpoints manually
-4. Verify environment configuration
+2. Review Firebase console for authentication logs
+3. Verify environment variables in Vercel
+4. Test Firestore security rules
 
 ---
 
