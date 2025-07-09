@@ -16,7 +16,7 @@ scripts/
 .firebase/
 firebase-debug.log
 firebase.json
-firebase.indexes.json
+firestore.indexes.json
 firestore.rules
 pglite-debug.log
 setup.sh
