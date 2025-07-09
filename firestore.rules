@@ -1,27 +1,33 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Cards collection - read only for users
-    match /cards/{cardId} {
-      allow read: if true;
-      allow write: if false; // Only functions can write
-    }
-    
-    // Decks collection - read only for users
-    match /decks/{deckId} {
-      allow read: if true;
-      allow write: if false; // Only functions can write
-    }
-    
-    // User profiles - users can read/write their own
-    match /profiles/{userId} {
+    // Users can only read/write their own profile data
+    match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
     
-    // Meta data - read only
-    match /meta/{document} {
+    // Meta sets are read-only for all users
+    match /metaSets/{document} {
       allow read: if true;
-      allow write: if false; // Only functions can write
+      allow write: if false;
+    }
+    
+    // Meta decks are read-only for all users
+    match /metaDecks/{document} {
+      allow read: if true;
+      allow write: if false;
+    }
+    
+    // Cards are read-only for all users
+    match /cards/{document} {
+      allow read: if true;
+      allow write: if false;
+    }
+    
+    // Sets are read-only for all users
+    match /sets/{document} {
+      allow read: if true;
+      allow write: if false;
     }
   }
 }

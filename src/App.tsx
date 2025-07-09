@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import EggLoader from './components/EggLoader';
-import DigitalWorldBackground from './scenes/DigitalWorldBackground';
+import { MantineProvider } from '@mantine/core';
+import '@mantine/core/styles.css';
+import DigitalPortal from './components/DigitalPortal';
+import CyberBackground from './components/CyberBackground';
 import Navigation from './components/Navigation';
 import HomePage from './pages/HomePage';
 import CardsPage from './pages/CardsPage';
 import MetaPage from './pages/MetaPage';
+import DeckDetailsPage from './pages/DeckDetailsPage';
 import IntelPage from './pages/IntelPage';
 import RadarPage from './pages/RadarPage';
 import ProfilePage from './pages/ProfilePage';
@@ -19,19 +22,41 @@ function App() {
   };
 
   return (
-    <Router>
-      <div className="App">
+    <MantineProvider
+      theme={{
+        colorScheme: 'dark',
+        colors: {
+          dark: [
+            '#C1C2C5',
+            '#A6A7AB', 
+            '#909296',
+            '#5c5f66',
+            '#373A40',
+            '#2C2E33',
+            '#25262b',
+            '#1A1B1E',
+            '#141517',
+            '#101113'
+          ]
+        },
+        primaryColor: 'blue',
+        defaultRadius: 'md'
+      }}
+    >
+      <Router>
+        <div className="App">
         {loading ? (
-          <EggLoader onComplete={handleLoadingComplete} />
+          <DigitalPortal onComplete={handleLoadingComplete} />
         ) : (
           <>
-            <DigitalWorldBackground />
+            <CyberBackground intensity="medium" />
             <Navigation />
             <main className="relative z-10">
               <Routes>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/cards" element={<CardsPage />} />
                 <Route path="/meta" element={<MetaPage />} />
+                <Route path="/deck/:deckId" element={<DeckDetailsPage />} />
                 <Route path="/intel" element={<IntelPage />} />
                 <Route path="/radar" element={<RadarPage />} />
                 <Route path="/synergy" element={<div className="min-h-screen pt-16 flex items-center justify-center"><div className="text-white text-2xl">Card Synergy - Coming Soon</div></div>} />
@@ -42,8 +67,9 @@ function App() {
             </main>
           </>
         )}
-      </div>
-    </Router>
+        </div>
+      </Router>
+    </MantineProvider>
   );
 }
 

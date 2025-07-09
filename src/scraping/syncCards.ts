@@ -2,11 +2,55 @@ import { db } from '../utils/firebase';
 import { collection, doc, setDoc } from 'firebase/firestore';
 import { DigimonCard } from '../utils/types';
 
-const DIGIMON_CARD_DB_URL = 'https://digimoncard.dev/cards';
+const DIGIMON_CARD_DB_URL = 'https://digimoncard.io/api-public/search.php?sort=name';
 
 export async function scrapeDigimonCards(): Promise<void> {
-  console.log('Seeding fallback cards...');
-  await seedFallbackCards();
+  try {
+    console.log('Fetching cards from Digimon API...');
+    const response = await fetch(DIGIMON_CARD_DB_URL);
+    
+    if (!response.ok) {
+      throw new Error('API request failed');
+    }
+    
+    const data = await response.json();
+    const cards = data.slice(0, 100); // Start with first 100 cards
+    
+    console.log(`Processing ${cards.length} cards...`);
+    
+    const cardsCollection = collection(db, 'cards');
+    
+    for (const apiCard of cards) {
+      const card: DigimonCard = {
+        id: apiCard.cardnumber || apiCard.id,
+        name: apiCard.name,
+        image: apiCard.image_url || null,
+        type: apiCard.type,
+        color: apiCard.color ? [apiCard.color] : [],
+        level: apiCard.lv ? parseInt(apiCard.lv) : undefined,
+        playCost: apiCard.playcost ? parseInt(apiCard.playcost) : undefined,
+        evolutionCost: apiCard.evolutioncost ? parseInt(apiCard.evolutioncost) : undefined,
+        dp: apiCard.dp ? parseInt(apiCard.dp) : undefined,
+        rarity: apiCard.rarity || 'Common',
+        set: apiCard.cardnumber?.split('-')[0] || 'Unknown',
+        cardNumber: apiCard.cardnumber || apiCard.id,
+        effects: apiCard.effect || '',
+        keywords: extractKeywords(apiCard.effect || ''),
+        traits: apiCard.attribute ? [apiCard.attribute] : [],
+        attribute: apiCard.attribute,
+        form: apiCard.form,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      
+      await setDoc(doc(cardsCollection, card.id), card);
+    }
+    
+    console.log(`Successfully imported ${cards.length} cards`);
+  } catch (error) {
+    console.error('Failed to fetch from API, using fallback:', error);
+    await seedFallbackCards();
+  }
 }
 
 function extractKeywords(effects: string): string[] {
@@ -35,7 +79,7 @@ export async function seedFallbackCards(): Promise<void> {
       cardNumber: 'BT01-001',
       effects: '[Your Turn] When this Digimon digivolves, gain +1 memory.',
       keywords: [],
-      image: 'https://via.placeholder.com/300x400/ff6b35/ffffff?text=Koromon'
+      image: 'https://images.digimoncard.io/images/cards/BT01-001.jpg'
     },
     {
       id: 'BT01-019',
@@ -48,7 +92,7 @@ export async function seedFallbackCards(): Promise<void> {
       cardNumber: 'BT01-019',
       effects: '[When Digivolving] Delete 1 of your opponent\'s Digimon with 3000 DP or less.',
       keywords: [],
-      image: 'https://via.placeholder.com/300x400/ff6b35/ffffff?text=Greymon'
+      image: 'https://images.digimoncard.io/images/cards/BT01-019.jpg'
     }
   ];
   

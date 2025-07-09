@@ -15,4 +15,10 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 export const auth = getAuth(app);
+
+// Debug: Check if auth domain is configured
+if (!firebaseConfig.authDomain) {
+  console.error('Firebase Auth Domain not configured. Check your .env file.');
+}
+
 export default app;

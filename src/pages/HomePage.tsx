@@ -1,194 +1,325 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import {
+  Container,
+  Title,
+  Text,
+  Grid,
+  Card,
+  Group,
+  Stack,
+  Button,
+  Box
+} from '@mantine/core';
 import { 
-  Search, 
-  TrendingUp, 
-  BarChart3, 
-  Radar, 
-  Zap, 
-  Settings,
-  ArrowRight 
-} from 'lucide-react';
+  IconSearch, 
+  IconTrendingUp, 
+  IconChartBar, 
+  IconRadar, 
+  IconBolt, 
+  IconSettings,
+  IconArrowRight 
+} from '@tabler/icons-react';
 
 const features = [
   {
-    icon: Search,
+    icon: IconSearch,
     title: 'Card Database',
     description: 'Search through live Digimon TCG card data with advanced filters',
     path: '/cards',
-    color: 'from-digi-blue to-digi-green'
+    gradient: { from: 'blue', to: 'green' }
   },
   {
-    icon: TrendingUp,
+    icon: IconTrendingUp,
     title: 'Meta Analysis',
     description: 'Real tournament decks and results from competitive play',
     path: '/meta',
-    color: 'from-digi-orange to-digi-blue'
+    gradient: { from: 'orange', to: 'blue' }
   },
   {
-    icon: BarChart3,
+    icon: IconChartBar,
     title: 'Intel Dashboard',
     description: 'Data-driven insights on archetype performance and trends',
     path: '/intel',
-    color: 'from-digi-purple to-digi-orange'
+    gradient: { from: 'violet', to: 'orange' }
   },
   {
-    icon: Radar,
+    icon: IconRadar,
     title: 'Regional Radar',
     description: 'Archetype popularity and win rates by region',
     path: '/radar',
-    color: 'from-digi-green to-digi-purple'
+    gradient: { from: 'green', to: 'violet' }
   },
   {
-    icon: Zap,
+    icon: IconBolt,
     title: 'Card Synergy',
     description: 'Discover powerful card combinations from real decks',
     path: '/synergy',
-    color: 'from-digi-blue to-digi-purple'
+    gradient: { from: 'blue', to: 'violet' }
   },
   {
-    icon: Settings,
+    icon: IconSettings,
     title: 'Deck Tools',
     description: 'Memory gauge, keyword explorer, and deck utilities',
     path: '/tools',
-    color: 'from-digi-orange to-digi-green'
+    gradient: { from: 'orange', to: 'green' }
   }
 ];
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen pt-16">
+    <Container size="xl" pt={80} pb={40}>
       {/* Hero Section */}
-      <section className="relative py-20 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <motion.h1 
-            className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-digi-blue via-digi-purple to-digi-orange bg-clip-text text-transparent"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
+      <Box py={120} ta="center" pos="relative">
+        {/* Floating Elements */}
+        <motion.div
+          style={{
+            position: 'absolute',
+            top: '20%',
+            left: '10%',
+            width: '60px',
+            height: '60px',
+            border: '2px solid rgba(0, 210, 211, 0.3)',
+            borderRadius: '50%',
+            zIndex: 0
+          }}
+          animate={{
+            y: [-10, 10, -10],
+            rotate: [0, 180, 360]
+          }}
+          transition={{
+            duration: 6,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+        
+        <motion.div
+          style={{
+            position: 'absolute',
+            top: '60%',
+            right: '15%',
+            width: '40px',
+            height: '40px',
+            border: '2px solid rgba(255, 107, 53, 0.4)',
+            transform: 'rotate(45deg)',
+            zIndex: 0
+          }}
+          animate={{
+            y: [10, -10, 10],
+            scale: [1, 1.2, 1]
+          }}
+          transition={{
+            duration: 4,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 2
+          }}
+        />
+        
+        <motion.div
+          initial={{ opacity: 0, y: 50, scale: 0.8 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 1, type: "spring", stiffness: 100 }}
+          style={{ position: 'relative', zIndex: 1 }}
+        >
+          <Title 
+            order={1} 
+            size={84}
+            mb={32}
+            style={{
+              background: 'linear-gradient(45deg, #00d2d3, #ff6b35, #8b5cf6)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              textShadow: '0 0 40px rgba(0, 210, 211, 0.4)',
+              letterSpacing: '2px'
+            }}
           >
             DigiDeck Portal
-          </motion.h1>
+          </Title>
           
-          <motion.p 
-            className="text-xl md:text-2xl text-gray-300 mb-8 max-w-2xl mx-auto"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5, duration: 0.8 }}
+          >
+            <Text 
+              size="lg" 
+              c="cyan"
+              fw={600}
+              mb={8}
+              style={{
+                textTransform: 'uppercase',
+                letterSpacing: '4px',
+                fontSize: '14px'
+              }}
+            >
+              // DIGITAL WORLD ACCESS GRANTED
+            </Text>
+          </motion.div>
+        </motion.div>
+        
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+        >
+          <Text 
+            size="xl" 
+            c="gray.2" 
+            mb={32} 
+            maw={600} 
+            mx="auto"
           >
             The ultimate Digimon TCG companion with live tournament data, 
             meta analysis, and immersive digital world experience
-          </motion.p>
-          
-          <motion.div 
-            className="flex flex-col sm:flex-row gap-4 justify-center"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-          >
-            <Link to="/cards" className="digi-button">
-              Explore Cards
-              <ArrowRight className="ml-2" size={20} />
-            </Link>
-            <Link to="/meta" className="digi-button bg-gradient-to-r from-digi-purple to-digi-orange">
-              View Meta
-              <TrendingUp className="ml-2" size={20} />
-            </Link>
-          </motion.div>
-        </div>
-      </section>
+          </Text>
+        </motion.div>
+        
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.4 }}
+        >
+          <Group justify="center" gap="md">
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button 
+                component={Link}
+                to="/cards"
+                variant="gradient"
+                gradient={{ from: 'blue', to: 'cyan' }}
+                size="lg"
+                rightSection={<IconArrowRight size={20} />}
+              >
+                Explore Cards
+              </Button>
+            </motion.div>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button 
+                component={Link}
+                to="/meta"
+                variant="gradient"
+                gradient={{ from: 'violet', to: 'orange' }}
+                size="lg"
+                rightSection={<IconTrendingUp size={20} />}
+              >
+                View Meta
+              </Button>
+            </motion.div>
+          </Group>
+        </motion.div>
+      </Box>
 
       {/* Features Grid */}
-      <section className="py-20 px-4">
-        <div className="max-w-6xl mx-auto">
-          <motion.h2 
-            className="text-3xl md:text-4xl font-bold text-center mb-12 text-white"
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            transition={{ duration: 0.6 }}
-          >
+      <Box py={80}>
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          transition={{ duration: 0.6 }}
+        >
+          <Title order={2} size={42} ta="center" mb={48} c="white">
             Explore the Digital World
-          </motion.h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {features.map((feature, index) => (
+          </Title>
+        </motion.div>
+        
+        <Grid>
+          {features.map((feature, index) => (
+            <Grid.Col key={feature.path} span={{ base: 12, sm: 6, lg: 4 }}>
               <motion.div
-                key={feature.path}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: index * 0.1 }}
-                whileHover={{ scale: 1.05 }}
-                className="group"
+                whileHover={{ scale: 1.05, rotateY: 5 }}
+                whileTap={{ scale: 0.98 }}
               >
-                <Link to={feature.path} className="block">
-                  <div className="digi-card h-full p-6 group-hover:border-digi-blue/80 transition-all duration-300">
-                    <div className={`w-12 h-12 rounded-lg bg-gradient-to-r ${feature.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
-                      <feature.icon className="text-white" size={24} />
-                    </div>
-                    
-                    <h3 className="text-xl font-bold text-white mb-2 group-hover:text-digi-blue transition-colors duration-300">
+                <Card 
+                  component={Link}
+                  to={feature.path}
+                  shadow="xl" 
+                  padding="xl" 
+                  radius="lg" 
+                  withBorder
+                  h="100%"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(26, 26, 46, 0.95), rgba(15, 15, 35, 0.95))',
+                    border: '2px solid rgba(0, 210, 211, 0.3)',
+                    cursor: 'pointer',
+                    textDecoration: 'none',
+                    backdropFilter: 'blur(10px)',
+                    position: 'relative',
+                    overflow: 'hidden'
+                  }}
+                >
+                  {/* Animated Border Effect */}
+                  <motion.div
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      background: `linear-gradient(45deg, transparent, rgba(0, 210, 211, 0.1), transparent)`,
+                      opacity: 0
+                    }}
+                    whileHover={{ opacity: 1 }}
+                    transition={{ duration: 0.3 }}
+                  />
+                  <motion.div
+                    whileHover={{ scale: 1.15, rotate: 10 }}
+                    transition={{ type: "spring", stiffness: 400 }}
+                    style={{ position: 'relative', zIndex: 1 }}
+                  >
+                    <Box 
+                      w={64} 
+                      h={64} 
+                      mb="lg"
+                      style={{
+                        background: `linear-gradient(45deg, #00d2d3, #ff6b35)`,
+                        borderRadius: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: '0 8px 32px rgba(0, 210, 211, 0.3)',
+                        border: '1px solid rgba(255, 255, 255, 0.1)'
+                      }}
+                    >
+                      <feature.icon size={32} color="white" />
+                    </Box>
+                  </motion.div>
+                  
+                  <Stack gap="md" style={{ position: 'relative', zIndex: 1 }}>
+                    <Title order={3} c="white" fw={700} lh={1.2}>
                       {feature.title}
-                    </h3>
+                    </Title>
                     
-                    <p className="text-gray-400 group-hover:text-gray-300 transition-colors duration-300">
+                    <Text c="gray.3" size="md" lh={1.5}>
                       {feature.description}
-                    </p>
+                    </Text>
                     
-                    <div className="mt-4 flex items-center text-digi-blue group-hover:text-digi-orange transition-colors duration-300">
-                      <span className="text-sm font-medium">Explore</span>
-                      <ArrowRight size={16} className="ml-1 group-hover:translate-x-1 transition-transform duration-300" />
-                    </div>
-                  </div>
-                </Link>
+                    <Group gap={8} c="cyan" mt="auto">
+                      <Text size="sm" fw={600} style={{ textTransform: 'uppercase', letterSpacing: '1px' }}>Access</Text>
+                      <motion.div
+                        whileHover={{ x: 6, scale: 1.2 }}
+                        transition={{ type: "spring", stiffness: 600 }}
+                      >
+                        <IconArrowRight size={18} />
+                      </motion.div>
+                    </Group>
+                  </Stack>
+                </Card>
               </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Stats Section */}
-      <section className="py-20 px-4 bg-digi-gray/30">
-        <div className="max-w-4xl mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6 }}
-            >
-              <div className="text-3xl md:text-4xl font-bold text-digi-blue mb-2">1000+</div>
-              <div className="text-gray-400">Cards Tracked</div>
-            </motion.div>
-            
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-            >
-              <div className="text-3xl md:text-4xl font-bold text-digi-orange mb-2">500+</div>
-              <div className="text-gray-400">Tournament Decks</div>
-            </motion.div>
-            
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-            >
-              <div className="text-3xl md:text-4xl font-bold text-digi-purple mb-2">50+</div>
-              <div className="text-gray-400">Archetypes</div>
-            </motion.div>
-            
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-            >
-              <div className="text-3xl md:text-4xl font-bold text-digi-green mb-2">Live</div>
-              <div className="text-gray-400">Data Sync</div>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-    </div>
+            </Grid.Col>
+          ))}
+        </Grid>
+      </Box>
+      
+      {/* Legal Disclaimer */}
+      <Box mt={80} pt={40} style={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)' }}>
+        <Text c="dimmed" size="sm" ta="center">
+          Digimon and all related characters are trademarks of Bandai. This is an unofficial fan-made project not affiliated with or endorsed by Bandai, Toei Animation, or any official Digimon entity.
+        </Text>
+      </Box>
+    </Container>
   );
 }
