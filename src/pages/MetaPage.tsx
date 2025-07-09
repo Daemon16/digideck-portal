@@ -19,15 +19,12 @@ import {
 } from '@mantine/core';
 import { IconTrophy, IconCalendar, IconMapPin, IconUsers, IconArrowLeft } from '@tabler/icons-react';
 import { useMetaSets, useSetDecks, useSetStats } from '../hooks/useFirestore';
-import { useAuth } from '../hooks/useAuth';
-import { MetaSet, SetDeck } from '../utils/types';
+import { MetaSet } from '../utils/types';
 
 export default function MetaPage() {
-  const navigate = useNavigate();
   const location = useLocation();
   const [selectedSet, setSelectedSet] = useState<MetaSet | null>(null);
   const [regionFilter, setRegionFilter] = useState('');
-  const { incrementActivity } = useAuth();
   
   // Handle navigation state from DeckDetailsPage
   useEffect(() => {
@@ -39,12 +36,12 @@ export default function MetaPage() {
   }, [location.state]);
   
   const { data: metaSets, loading: setsLoading } = useMetaSets();
-  const { data: decks, loading: decksLoading, hasMore, loadMore } = useSetDecks(selectedSet, {
+  const { data: decks, loading: decksLoading, hasMore, loadMore } = useSetDecks(selectedSet || undefined, {
     region: regionFilter || undefined,
     limit: 12,
   });
   
-  const { stats, loading: statsLoading } = useSetStats(selectedSet, {
+  const { stats } = useSetStats(selectedSet || undefined, {
     region: regionFilter || undefined,
   });
   
@@ -497,10 +494,7 @@ function DeckCard({ deck, index }: { deck: any; index: number }) {
           cursor: 'pointer',
           height: '100%'
         }}
-        onClick={() => {
-          navigate(`/deck/${deck.id}`);
-          incrementActivity && incrementActivity('decksAnalyzed');
-        }}
+        onClick={() => window.location.href = `/deck/${deck.id}`}
       >
         {/* Card Image */}
         <Card.Section>
@@ -646,10 +640,7 @@ function DeckResultItem({ deck }: { deck: any }) {
     <motion.div
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
-      onClick={() => {
-        navigate(`/deck/${deck.id}`);
-        incrementActivity && incrementActivity('decksAnalyzed');
-      }}
+      onClick={() => window.location.href = `/deck/${deck.id}`}
       style={{ cursor: 'pointer' }}
     >
       <Group justify="space-between" p="sm" style={{

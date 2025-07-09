@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { TrendingUp, BarChart3, PieChart as PieChartIcon, Activity } from 'lucide-react';
 import { useMetaSets, useSetDecks } from '../hooks/useFirestore';
 import { MetaSet } from '../utils/types';
@@ -11,7 +11,7 @@ const COLORS = ['#00a8ff', '#ff6b35', '#8b5cf6', '#00d2d3', '#fbbf24', '#ef4444'
 export default function IntelPage() {
   const [selectedSet, setSelectedSet] = useState<MetaSet | null>(null);
   const { data: metaSets, loading: setsLoading } = useMetaSets();
-  const { data: decks, loading: decksLoading } = useSetDecks(selectedSet, { limit: 1000 });
+  const { data: decks, loading: decksLoading } = useSetDecks(selectedSet || undefined, { limit: 1000 });
   
   useEffect(() => {
     if (!selectedSet && metaSets.length > 0) {

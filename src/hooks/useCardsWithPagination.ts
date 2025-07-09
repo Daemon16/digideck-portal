@@ -76,15 +76,18 @@ export function useCardsWithPagination(filters: CardFilters = {}): UseCardsResul
         return;
       }
 
-      const newCards = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate() || new Date(),
-        updatedAt: doc.data().updatedAt?.toDate() || new Date(),
-      })) as DigimonCard[];
+      const newCards = snapshot.docs.map(doc => {
+        const data = doc.data() as any;
+        return {
+          id: doc.id,
+          ...data,
+          createdAt: data.createdAt?.toDate() || new Date(),
+          updatedAt: data.updatedAt?.toDate() || new Date(),
+        };
+      }) as DigimonCard[];
 
       // If searchTerms field doesn't exist, fall back to client-side filtering
-      const filteredCards = filters.searchTerm && newCards.length > 0 && !newCards[0].searchTerms
+      const filteredCards = filters.searchTerm && newCards.length > 0
         ? newCards.filter(card => {
             const searchTerm = filters.searchTerm!.toLowerCase();
             return (
@@ -117,7 +120,7 @@ export function useCardsWithPagination(filters: CardFilters = {}): UseCardsResul
         }));
       }
 
-      setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
+      setLastDoc(snapshot.docs[snapshot.docs.length - 1] as any || null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch cards');
     } finally {

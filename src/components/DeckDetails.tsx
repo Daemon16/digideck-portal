@@ -1,4 +1,3 @@
-import React from 'react';
 import { Card, Badge, Group, Text, Image, Grid, Container, Title, Stack } from '@mantine/core';
 import { TournamentDeck } from '../utils/types';
 
@@ -83,7 +82,7 @@ export function DeckDetails({ deck }: DeckDetailsProps) {
                   
                   <Badge
                     variant="light"
-                    color={card.type === 'Digitama' ? 'green' : 'blue'}
+                    color={(card.type as string) === 'Digitama' ? 'green' : 'blue'}
                     size="xs"
                     mt="xs"
                     fullWidth

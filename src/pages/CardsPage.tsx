@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Container,
@@ -20,7 +20,7 @@ import {
   Box,
   Modal
 } from '@mantine/core';
-import { IconSearch, IconFilter, IconGridDots, IconList, IconLoader2 } from '@tabler/icons-react';
+import { IconSearch, IconFilter, IconGridDots, IconList } from '@tabler/icons-react';
 import { useCardsWithPagination } from '../hooks/useCardsWithPagination';
 import { useSets } from '../hooks/useSets';
 import { useAuth } from '../hooks/useAuth';
@@ -39,13 +39,7 @@ interface CardItemProps {
   index: number;
 }
 
-interface FilterSelectProps {
-  value: string;
-  onChange: (value: string) => void;
-  options: Array<{ value: string; label: string }>;
-  placeholder: string;
-  disabled?: boolean;
-}
+
 
 export default function CardsPage(): JSX.Element {
   const [searchTerm, setSearchTerm] = useState<string>('');

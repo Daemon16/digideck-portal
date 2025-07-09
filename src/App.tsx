@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { MantineProvider } from '@mantine/core';
 import '@mantine/core/styles.css';
@@ -24,7 +24,6 @@ function App() {
   return (
     <MantineProvider
       theme={{
-        colorScheme: 'dark',
         colors: {
           dark: [
             '#C1C2C5',

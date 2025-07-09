@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Container, Title, Text, Select, Group, Loader, Center, Stack, Grid, Card, Badge, Progress, Box } from '@mantine/core';
-import { IconRadar, IconMapPin, IconTrophy, IconTarget } from '@tabler/icons-react';
+import { IconRadar, IconMapPin, IconTarget } from '@tabler/icons-react';
 import { useMetaSets, useSetDecks } from '../hooks/useFirestore';
 import { MetaSet } from '../utils/types';
 
@@ -10,7 +10,7 @@ const COLORS = ['#00d2d3', '#ff6b35', '#8b5cf6', '#fbbf24', '#ef4444', '#10b981'
 export default function RadarPage() {
   const [selectedSet, setSelectedSet] = useState<MetaSet | null>(null);
   const { data: metaSets, loading: setsLoading } = useMetaSets();
-  const { data: decks, loading: decksLoading } = useSetDecks(selectedSet, { limit: 1000 });
+  const { data: decks, loading: decksLoading } = useSetDecks(selectedSet || undefined, { limit: 1000 });
   
   useEffect(() => {
     if (!selectedSet && metaSets.length > 0) {

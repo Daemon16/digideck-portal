@@ -23,7 +23,7 @@ function CircuitLines() {
       {circuitPaths.map((points, i) => (
         <Line
           key={i}
-          points={points}
+          points={points.map(p => [p[0], p[1], p[2]] as [number, number, number])}
           color={i % 2 === 0 ? '#00d4ff' : '#ff6600'}
           lineWidth={2}
           transparent

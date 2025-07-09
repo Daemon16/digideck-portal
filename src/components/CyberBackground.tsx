@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import  { useEffect, useRef } from 'react';
 import './CyberBackground.css';
 
 interface CyberBackgroundProps {
@@ -33,8 +33,8 @@ export default function CyberBackground({ intensity = 'medium' }: CyberBackgroun
       color: string;
 
       constructor() {
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
+        this.x = Math.random() * (canvas ? canvas.width : 800);
+        this.y = Math.random() * (canvas ? canvas.height : 800);
         this.vx = (Math.random() - 0.5) * 0.5;
         this.vy = (Math.random() - 0.5) * 0.5;
         this.life = 0;
@@ -47,11 +47,12 @@ export default function CyberBackground({ intensity = 'medium' }: CyberBackgroun
         this.y += this.vy;
         this.life++;
 
-        if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
-        if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+        if (this.x < 0 || this.x > (canvas ? canvas.width : 800)) this.vx *= -1;
+        if (this.y < 0 || this.y > (canvas ? canvas.height : 800)) this.vy *= -1;
       }
 
       draw() {
+        if (!ctx) return;
         const alpha = 1 - (this.life / this.maxLife);
         ctx.globalAlpha = alpha * 0.6;
         ctx.fillStyle = this.color;
@@ -72,6 +73,7 @@ export default function CyberBackground({ intensity = 'medium' }: CyberBackgroun
     };
 
     const animate = () => {
+      if (!ctx || !canvas) return;
       ctx.fillStyle = 'rgba(15, 15, 35, 0.1)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 

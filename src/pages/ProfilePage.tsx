@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Container, Title, Text, Card, Group, Stack, Badge, Button, Loader, Center, TextInput } from '@mantine/core';
+import { Container, Title, Text, Card, Group, Stack, Button, Loader, Center, TextInput } from '@mantine/core';
 import { IconUser, IconStar, IconTrophy, IconLogout, IconEdit, IconCheck, IconX } from '@tabler/icons-react';
 import { useAuth } from '../hooks/useAuth';
 import AuthModal from '../components/AuthModal';
