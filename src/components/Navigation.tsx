@@ -1,4 +1,4 @@
-import React from 'react';
+import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   Search, 
@@ -8,7 +8,9 @@ import {
   Zap, 
   Settings, 
   User, 
-  Shuffle 
+  Shuffle,
+  Menu,
+  X
 } from 'lucide-react';
 
 const navItems = [
@@ -25,6 +27,7 @@ const navItems = [
 
 export default function Navigation() {
   const location = useLocation();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   return (
     <nav className="fixed top-0 left-0 right-0 z-40 bg-digi-dark/90 backdrop-blur-md border-b border-digi-blue/30">
@@ -63,37 +66,43 @@ export default function Navigation() {
           
           {/* Mobile menu button */}
           <div className="md:hidden">
-            <button className="text-gray-300 hover:text-white p-2">
-              <Settings size={20} />
+            <button 
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="text-gray-300 hover:text-white p-2 transition-colors"
+            >
+              {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
           </div>
         </div>
       </div>
       
       {/* Mobile menu */}
-      <div className="md:hidden bg-digi-gray/95 backdrop-blur-md border-t border-digi-blue/30">
-        <div className="px-2 pt-2 pb-3 space-y-1">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = location.pathname === item.path;
-            
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  isActive
-                    ? 'bg-digi-blue/20 text-digi-blue border border-digi-blue/30'
-                    : 'text-gray-300 hover:text-white hover:bg-digi-gray/50'
-                }`}
-              >
-                {Icon && <Icon size={16} />}
-                <span>{item.label}</span>
-              </Link>
-            );
-          })}
+      {isMobileMenuOpen && (
+        <div className="md:hidden bg-digi-gray/95 backdrop-blur-md border-t border-digi-blue/30">
+          <div className="px-2 pt-2 pb-3 space-y-1">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = location.pathname === item.path;
+              
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    isActive
+                      ? 'bg-digi-blue/20 text-digi-blue border border-digi-blue/30'
+                      : 'text-gray-300 hover:text-white hover:bg-digi-gray/50'
+                  }`}
+                >
+                  {Icon && <Icon size={16} />}
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
     </nav>
   );
 }

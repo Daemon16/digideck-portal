@@ -71,7 +71,7 @@ export default function HomePage() {
   return (
     <Container size="xl" pt={80} pb={40}>
       {/* Hero Section */}
-      <Box py={120} ta="center" pos="relative">
+      <Box py={{ base: 60, md: 120 }} ta="center" pos="relative">
         {/* Floating Elements */}
         <motion.div
           style={{
@@ -126,8 +126,8 @@ export default function HomePage() {
         >
           <Title 
             order={1} 
-            size={84}
-            mb={32}
+            size={{ base: 48, sm: 64, md: 84 }}
+            mb={{ base: 24, md: 32 }}
             style={{
               background: 'linear-gradient(45deg, #00d2d3, #ff6b35, #8b5cf6)',
               WebkitBackgroundClip: 'text',
@@ -166,11 +166,12 @@ export default function HomePage() {
           transition={{ duration: 0.8, delay: 0.2 }}
         >
           <Text 
-            size="xl" 
+            size={{ base: 'lg', md: 'xl' }}
             c="gray.2" 
-            mb={32} 
+            mb={{ base: 24, md: 32 }}
             maw={600} 
             mx="auto"
+            px={{ base: 'md', md: 0 }}
           >
             The ultimate Digimon TCG companion with live tournament data, 
             meta analysis, and immersive digital world experience
@@ -182,7 +183,7 @@ export default function HomePage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.4 }}
         >
-          <Group justify="center" gap="md">
+          <Group justify="center" gap={{ base: 'sm', md: 'md' }}>
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Button 
                 component={Link}
@@ -212,18 +213,18 @@ export default function HomePage() {
       </Box>
 
       {/* Features Grid */}
-      <Box py={80}>
+      <Box py={{ base: 40, md: 80 }}>
         <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           transition={{ duration: 0.6 }}
         >
-          <Title order={2} size={42} ta="center" mb={48} c="white">
+          <Title order={2} size={{ base: 32, md: 42 }} ta="center" mb={{ base: 32, md: 48 }} c="white">
             Explore the Digital World
           </Title>
         </motion.div>
         
-        <Grid>
+        <Grid gutter={{ base: 'md', md: 'lg' }}>
           {features.map((feature, index) => (
             <Grid.Col key={feature.path} span={{ base: 12, sm: 6, lg: 4 }}>
               <motion.div

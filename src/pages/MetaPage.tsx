@@ -494,7 +494,7 @@ function DeckCard({ deck, index }: { deck: any; index: number }) {
           cursor: 'pointer',
           height: '100%'
         }}
-        onClick={() => window.location.href = `/deck/${deck.id}`}
+        onClick={() => navigate(`/deck/${deck.id}`)}
       >
         {/* Card Image */}
         <Card.Section>
@@ -640,7 +640,7 @@ function DeckResultItem({ deck }: { deck: any }) {
     <motion.div
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
-      onClick={() => window.location.href = `/deck/${deck.id}`}
+      onClick={() => navigate(`/deck/${deck.id}`)}
       style={{ cursor: 'pointer' }}
     >
       <Group justify="space-between" p="sm" style={{

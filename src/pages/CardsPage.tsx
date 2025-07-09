@@ -165,28 +165,18 @@ export default function CardsPage(): JSX.Element {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2, duration: 0.5 }}
       >
-        <Stack mb={32} gap="md">
-          <Group align="flex-end">
+        <Stack mb={{ base: 24, md: 32 }} gap="md">
+          <Stack gap="md">
             <TextInput
               placeholder="Search cards by name or effect..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.currentTarget.value)}
               leftSection={<IconSearch size={16} />}
-              style={{ flex: 1 }}
               size="md"
             />
             
-            <SegmentedControl
-              value={viewMode}
-              onChange={(value) => setViewMode(value as ViewMode)}
-              data={[
-                { label: <IconGridDots size={16} />, value: 'grid' },
-                { label: <IconList size={16} />, value: 'list' }
-              ]}
-            />
-          </Group>
-
-          <Group>
+            <Group justify="space-between" wrap="wrap">
+              <Group gap="xs" style={{ flex: 1 }}>
             <Select
               placeholder="All Types"
               value={typeFilter}
@@ -197,89 +187,101 @@ export default function CardsPage(): JSX.Element {
                 { value: 'Tamer', label: 'Tamer' },
                 { value: 'Option', label: 'Option' }
               ]}
-              w={150}
-              styles={{
-                dropdown: {
-                  backgroundColor: 'var(--mantine-color-dark-7)',
-                  border: '1px solid var(--mantine-color-dark-4)'
-                },
-                option: {
-                  color: 'var(--mantine-color-gray-1)',
-                  '&[data-selected]': {
-                    backgroundColor: 'var(--mantine-color-blue-6)',
-                    color: 'white'
+                w={{ base: 100, sm: 150 }}
+                styles={{
+                  dropdown: {
+                    backgroundColor: 'var(--mantine-color-dark-7)',
+                    border: '1px solid var(--mantine-color-dark-4)'
                   },
-                  '&[data-hovered]': {
-                    backgroundColor: 'var(--mantine-color-dark-5)',
-                    color: 'white'
+                  option: {
+                    color: 'var(--mantine-color-gray-1)',
+                    '&[data-selected]': {
+                      backgroundColor: 'var(--mantine-color-blue-6)',
+                      color: 'white'
+                    },
+                    '&[data-hovered]': {
+                      backgroundColor: 'var(--mantine-color-dark-5)',
+                      color: 'white'
+                    }
                   }
-                }
-              }}
-            />
-            
-            <Select
-              placeholder="All Colors"
-              value={colorFilter}
-              onChange={(value) => setColorFilter(value as DigimonColor | '')}
-              data={[
-                { value: '', label: 'All Colors' },
-                { value: 'Red', label: 'Red' },
-                { value: 'Blue', label: 'Blue' },
-                { value: 'Yellow', label: 'Yellow' },
-                { value: 'Green', label: 'Green' },
-                { value: 'Black', label: 'Black' },
-                { value: 'Purple', label: 'Purple' },
-                { value: 'White', label: 'White' }
-              ]}
-              w={150}
-              styles={{
-                dropdown: {
-                  backgroundColor: 'var(--mantine-color-dark-7)',
-                  border: '1px solid var(--mantine-color-dark-4)'
-                },
-                option: {
-                  color: 'var(--mantine-color-gray-1)',
-                  '&[data-selected]': {
-                    backgroundColor: 'var(--mantine-color-blue-6)',
-                    color: 'white'
+                }}
+              />
+              
+              <Select
+                placeholder="All Colors"
+                value={colorFilter}
+                onChange={(value) => setColorFilter(value as DigimonColor | '')}
+                data={[
+                  { value: '', label: 'All Colors' },
+                  { value: 'Red', label: 'Red' },
+                  { value: 'Blue', label: 'Blue' },
+                  { value: 'Yellow', label: 'Yellow' },
+                  { value: 'Green', label: 'Green' },
+                  { value: 'Black', label: 'Black' },
+                  { value: 'Purple', label: 'Purple' },
+                  { value: 'White', label: 'White' }
+                ]}
+                w={{ base: 100, sm: 150 }}
+                styles={{
+                  dropdown: {
+                    backgroundColor: 'var(--mantine-color-dark-7)',
+                    border: '1px solid var(--mantine-color-dark-4)'
                   },
-                  '&[data-hovered]': {
-                    backgroundColor: 'var(--mantine-color-dark-5)',
-                    color: 'white'
+                  option: {
+                    color: 'var(--mantine-color-gray-1)',
+                    '&[data-selected]': {
+                      backgroundColor: 'var(--mantine-color-blue-6)',
+                      color: 'white'
+                    },
+                    '&[data-hovered]': {
+                      backgroundColor: 'var(--mantine-color-dark-5)',
+                      color: 'white'
+                    }
                   }
-                }
-              }}
-            />
-            
-            <Select
-              placeholder="All Sets"
-              value={setFilter}
-              onChange={(value) => setSetFilter(value || '')}
-              data={[
-                { value: '', label: 'All Sets' },
-                ...sets.map(set => ({ value: set.code, label: set.name }))
-              ]}
-              disabled={setsLoading}
-              w={150}
-              styles={{
-                dropdown: {
-                  backgroundColor: 'var(--mantine-color-dark-7)',
-                  border: '1px solid var(--mantine-color-dark-4)'
-                },
-                option: {
-                  color: 'var(--mantine-color-gray-1)',
-                  '&[data-selected]': {
-                    backgroundColor: 'var(--mantine-color-blue-6)',
-                    color: 'white'
+                }}
+              />
+              
+              <Select
+                placeholder="All Sets"
+                value={setFilter}
+                onChange={(value) => setSetFilter(value || '')}
+                data={[
+                  { value: '', label: 'All Sets' },
+                  ...sets.map(set => ({ value: set.code, label: set.name }))
+                ]}
+                disabled={setsLoading}
+                w={{ base: 100, sm: 150 }}
+                styles={{
+                  dropdown: {
+                    backgroundColor: 'var(--mantine-color-dark-7)',
+                    border: '1px solid var(--mantine-color-dark-4)'
                   },
-                  '&[data-hovered]': {
-                    backgroundColor: 'var(--mantine-color-dark-5)',
-                    color: 'white'
+                  option: {
+                    color: 'var(--mantine-color-gray-1)',
+                    '&[data-selected]': {
+                      backgroundColor: 'var(--mantine-color-blue-6)',
+                      color: 'white'
+                    },
+                    '&[data-hovered]': {
+                      backgroundColor: 'var(--mantine-color-dark-5)',
+                      color: 'white'
+                    }
                   }
-                }
-              }}
-            />
-          </Group>
+                }}
+              />
+              </Group>
+              
+              <SegmentedControl
+                value={viewMode}
+                onChange={(value) => setViewMode(value as ViewMode)}
+                data={[
+                  { label: <IconGridDots size={16} />, value: 'grid' },
+                  { label: <IconList size={16} />, value: 'list' }
+                ]}
+                size="md"
+              />
+            </Group>
+          </Stack>
         </Stack>
       </motion.div>
 
