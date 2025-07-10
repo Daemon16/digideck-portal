@@ -20,11 +20,12 @@ import {
   Box,
   Modal
 } from '@mantine/core';
-import { IconSearch, IconFilter, IconGridDots, IconList } from '@tabler/icons-react';
+import { IconSearch, IconFilter, IconGridDots, IconList, IconArrowUp } from '@tabler/icons-react';
 import { useCardsWithPagination } from '../hooks/useCardsWithPagination';
 import { useSets } from '../hooks/useSets';
 import { useAuth } from '../hooks/useAuth';
 import { DigimonCard, DigimonCardType, DigimonColor, CardFilters } from '../utils/types';
+import ScrollToTop from '../components/ScrollToTop';
 import {
   createColumnHelper,
   flexRender,
@@ -49,6 +50,7 @@ export default function CardsPage(): JSX.Element {
   const [setFilter, setSetFilter] = useState<string>('');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [selectedCard, setSelectedCard] = useState<DigimonCard | null>(null);
+  const [displayLimit, setDisplayLimit] = useState<number>(20);
   const { incrementActivity } = useAuth();
   
   // Debounce search term to prevent excessive API calls
@@ -70,13 +72,36 @@ export default function CardsPage(): JSX.Element {
     type: typeFilter || undefined,
     color: colorFilter || undefined,
     set: setFilter || undefined,
-    searchTerm: debouncedSearchTerm || undefined,
-  }), [typeFilter, colorFilter, setFilter, debouncedSearchTerm]);
+    fetchAll: true // Fetch all cards for client-side filtering
+  }), [typeFilter, colorFilter, setFilter]);
   
   const { cards, loading, error, pagination, loadMore } = useCardsWithPagination(filters);
   
-  // Cards are already filtered by Firebase
-  const filteredCards = cards;
+  // Client-side filtering
+  const filteredCards = useMemo(() => {
+    let filtered = cards;
+    
+    if (debouncedSearchTerm) {
+      filtered = filtered.filter(card => 
+        card.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
+      );
+    }
+    
+    return filtered;
+  }, [cards, debouncedSearchTerm]);
+  
+  // Display cards with lazy loading
+  const displayedCards = filteredCards.slice(0, displayLimit);
+  const hasMoreCards = filteredCards.length > displayLimit;
+  
+  const loadMoreCards = () => {
+    setDisplayLimit(prev => prev + 20);
+  };
+  
+  // Reset display limit when filters change
+  useEffect(() => {
+    setDisplayLimit(20);
+  }, [debouncedSearchTerm, typeFilter, colorFilter, setFilter]);
   const { sets, loading: setsLoading } = useSets();
   
   const handleLoadMore = useCallback(() => {
@@ -299,7 +324,7 @@ export default function CardsPage(): JSX.Element {
       {!loading && (
         viewMode === 'grid' ? (
           <Grid>
-            {filteredCards.map((card, index) => (
+            {displayedCards.map((card, index) => (
               <Grid.Col key={card.id} span={{ base: 12, xs: 6, sm: 4, md: 3, lg: 2.4 }}>
                 <motion.div
                   initial={{ opacity: 0, y: 30 }}
@@ -315,32 +340,34 @@ export default function CardsPage(): JSX.Element {
             ))}
           </Grid>
         ) : (
-          <CardsTable cards={filteredCards} />
+          <CardsTable cards={displayedCards} />
         )
       )}
 
       {/* Load More Section */}
-      {pagination.hasMore && filteredCards.length > 0 && (
+      {hasMoreCards && (
         <Center mt={32}>
-          {loading && pagination.page > 1 ? (
-            <Group>
-              <Loader size="sm" />
-              <Text c="dimmed">Loading more cards...</Text>
-            </Group>
-          ) : (
+          <Group>
             <Button
-              onClick={handleLoadMore}
-              disabled={loading}
+              onClick={loadMoreCards}
               variant="gradient"
               gradient={{ from: 'blue', to: 'cyan' }}
             >
-              Load More ({pagination.total - filteredCards.length} remaining)
+              Load More ({filteredCards.length - displayLimit} remaining)
             </Button>
-          )}
+            <Button
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              variant="outline"
+              color="cyan"
+              leftSection={<IconArrowUp size={16} />}
+            >
+              Top
+            </Button>
+          </Group>
         </Center>
       )}
 
-      {filteredCards.length === 0 && !loading && (
+      {displayedCards.length === 0 && !loading && (
           <Center py={48}>
             <Stack align="center">
               <IconFilter size={48} color="gray" />
@@ -505,6 +532,8 @@ export default function CardsPage(): JSX.Element {
             </Grid>
           )}
         </Modal>
+        
+
     </Container>
   );
 }

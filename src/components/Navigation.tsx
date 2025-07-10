@@ -22,7 +22,7 @@ const navItems = [
   { path: '/synergy', label: 'Synergy', icon: Zap },
   { path: '/tools', label: 'Tools', icon: Settings },
   { path: '/profile', label: 'Profile', icon: User },
-  { path: '/chaos', label: 'Chaos', icon: Shuffle },
+  { path: '/my-decks', label: 'My Decks', icon: Shuffle },
 ];
 
 export default function Navigation() {

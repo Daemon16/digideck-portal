@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { MantineProvider } from '@mantine/core';
+import { Notifications } from '@mantine/notifications';
 import '@mantine/core/styles.css';
+import '@mantine/notifications/styles.css';
 import DigitalPortal from './components/DigitalPortal';
 import CyberBackground from './components/CyberBackground';
 import Navigation from './components/Navigation';
@@ -13,6 +15,7 @@ import IntelPage from './pages/IntelPage';
 import RadarPage from './pages/RadarPage';
 import ProfilePage from './pages/ProfilePage';
 import ToolsPage from './pages/ToolsPage';
+import MyDecksPage from './pages/MyDecksPage';
 
 function App() {
   const [loading, setLoading] = useState(true);
@@ -42,6 +45,7 @@ function App() {
         defaultRadius: 'md'
       }}
     >
+      <Notifications />
       <Router>
         <div className="App">
         {loading ? (
@@ -60,6 +64,7 @@ function App() {
                 <Route path="/radar" element={<RadarPage />} />
                 <Route path="/synergy" element={<div className="min-h-screen pt-16 flex items-center justify-center"><div className="text-white text-2xl">Card Synergy - Coming Soon</div></div>} />
                 <Route path="/tools" element={<ToolsPage />} />
+            <Route path="/my-decks" element={<MyDecksPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/chaos" element={<div className="min-h-screen pt-16 flex items-center justify-center"><div className="text-white text-2xl">Chaos Mode - Coming Soon</div></div>} />
               </Routes>

@@ -19,7 +19,8 @@ import {
   Box,
   Modal
 } from '@mantine/core';
-import { IconArrowLeft, IconTrophy, IconCalendar, IconMapPin, IconUser, IconHash, IconStack, IconTarget } from '@tabler/icons-react';
+import { IconArrowLeft, IconTrophy, IconCalendar, IconMapPin, IconUser, IconHash, IconStack, IconTarget, IconShare, IconDownload, IconLink } from '@tabler/icons-react';
+import { notifications } from '@mantine/notifications';
 import { doc, getDoc, collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { db } from '../utils/firebase';
 import { DetailedDeck, DeckCard, MetaSet } from '../utils/types';
@@ -32,6 +33,7 @@ export default function DeckDetailsPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [relatedSet, setRelatedSet] = useState<MetaSet | null>(null);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
 
   useEffect(() => {
     async function fetchDeck() {
@@ -190,26 +192,43 @@ export default function DeckDetailsPage() {
                 </motion.div>
               </Stack>
               
-              <motion.div
-                initial={{ opacity: 0, scale: 0 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
-                whileHover={{ scale: 1.1, rotate: 5 }}
-              >
-                <Badge 
-                  size="xl" 
-                  variant="gradient"
-                  gradient={{
-                    from: deck.placement === 1 ? 'yellow' : deck.placement <= 4 ? 'blue' : 'gray',
-                    to: deck.placement === 1 ? 'orange' : deck.placement <= 4 ? 'cyan' : 'dark'
-                  }}
-                  style={{
-                    boxShadow: deck.placement === 1 ? '0 0 20px rgba(255, 215, 0, 0.5)' : '0 0 10px rgba(0, 168, 255, 0.3)'
-                  }}
+              <Group gap="md">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
+                  whileHover={{ scale: 1.1, rotate: 5 }}
                 >
-                  #{deck.placement} Place
-                </Badge>
-              </motion.div>
+                  <Badge 
+                    size="xl" 
+                    variant="gradient"
+                    gradient={{
+                      from: deck.placement === 1 ? 'yellow' : deck.placement <= 4 ? 'blue' : 'gray',
+                      to: deck.placement === 1 ? 'orange' : deck.placement <= 4 ? 'cyan' : 'dark'
+                    }}
+                    style={{
+                      boxShadow: deck.placement === 1 ? '0 0 20px rgba(255, 215, 0, 0.5)' : '0 0 10px rgba(0, 168, 255, 0.3)'
+                    }}
+                  >
+                    #{deck.placement} Place
+                  </Badge>
+                </motion.div>
+                
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.4 }}
+                >
+                  <Button
+                    variant="gradient"
+                    gradient={{ from: 'cyan', to: 'blue' }}
+                    leftSection={<IconShare size={16} />}
+                    onClick={() => setShareModalOpen(true)}
+                  >
+                    Share Deck
+                  </Button>
+                </motion.div>
+              </Group>
             </Group>
           </Stack>
         </motion.div>
@@ -341,7 +360,7 @@ export default function DeckDetailsPage() {
                       <SimpleGrid cols={{ base: 2, sm: 3, md: 4, lg: 5 }} spacing="md">
                         {deck.cards.map((card, index) => (
                           <motion.div
-                            key={`${card.cardId || card.cardNumber || 'card'}-${index}`}
+                            key={`deck-card-${card.cardId || card.cardNumber || card.name || 'unknown'}-${index}`}
                             initial={{ opacity: 0, y: 50, rotateY: -90 }}
                             animate={{ opacity: 1, y: 0, rotateY: 0 }}
                             transition={{ 
@@ -397,6 +416,86 @@ export default function DeckDetailsPage() {
               />
             </div>
           )}
+        </Modal>
+        
+        {/* Share Modal */}
+        <Modal
+          opened={shareModalOpen}
+          onClose={() => setShareModalOpen(false)}
+          title="Share Deck"
+          centered
+          styles={{
+            content: {
+              background: 'linear-gradient(135deg, rgba(26, 26, 46, 0.95), rgba(15, 15, 35, 0.95))',
+              border: '2px solid rgba(0, 210, 211, 0.4)',
+              backdropFilter: 'blur(15px)'
+            },
+            header: {
+              background: 'transparent',
+              borderBottom: '1px solid rgba(0, 210, 211, 0.2)'
+            },
+            title: { color: 'white', fontWeight: 700 }
+          }}
+        >
+          <Stack gap="md">
+            <Button
+              variant="gradient"
+              gradient={{ from: 'green', to: 'teal' }}
+              leftSection={<IconDownload size={16} />}
+              onClick={async () => {
+                const exportArray = ['Exported from digideck-portal'];
+                deck.cards?.forEach(card => {
+                  for (let i = 0; i < card.quantity; i++) {
+                    exportArray.push(card.cardNumber || card.name || 'UNKNOWN');
+                  }
+                });
+                try {
+                  await navigator.clipboard.writeText(JSON.stringify(exportArray));
+                  notifications.show({
+                    title: 'Success!',
+                    message: 'Deck exported to clipboard',
+                    color: 'green'
+                  });
+                } catch (err) {
+                  notifications.show({
+                    title: 'Error',
+                    message: 'Failed to copy to clipboard',
+                    color: 'red'
+                  });
+                }
+                setShareModalOpen(false);
+              }}
+              fullWidth
+            >
+              Export for Play (Copy to Clipboard)
+            </Button>
+            
+            <Button
+              variant="gradient"
+              gradient={{ from: 'blue', to: 'cyan' }}
+              leftSection={<IconLink size={16} />}
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(window.location.href);
+                  notifications.show({
+                    title: 'Success!',
+                    message: 'Deck link copied to clipboard',
+                    color: 'green'
+                  });
+                } catch (err) {
+                  notifications.show({
+                    title: 'Error',
+                    message: 'Failed to copy link',
+                    color: 'red'
+                  });
+                }
+                setShareModalOpen(false);
+              }}
+              fullWidth
+            >
+              Copy Deck Link
+            </Button>
+          </Stack>
         </Modal>
       </AnimatePresence>
     </Container>

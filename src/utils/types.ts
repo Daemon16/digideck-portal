@@ -34,8 +34,9 @@ export interface DeckCard {
   quantity: number;
   cardNumber?: string;
   type?: DigimonCardType;
-  color?: DigimonColor[];
+  form?: string;
   level?: number;
+  color?: DigimonColor[];
   image?: string;
 }
 
@@ -63,20 +64,11 @@ export interface UserDeck {
   id: string;
   name: string;
   description?: string;
-  archetype?: string;
   userId: string;
-  isPublic: boolean;
-  format: TournamentFormat;
+  format: string;
   cards: DeckCard[];
-  mainDeck: DeckCard[];
-  eggDeck: DeckCard[];
-  sideboardDeck?: DeckCard[];
-  totalCards: number;
-  colors: DigimonColor[];
-  tags: string[];
   createdAt: Date;
   updatedAt: Date;
-  lastPlayed?: Date;
 }
 
 export interface DetailedDeck extends TournamentDeck {

@@ -36,6 +36,7 @@ const defaultAchievements: Achievement[] = [
   { id: 'card_viewer', name: 'Card Collector', description: 'Viewed 25+ cards', unlocked: false },
   { id: 'meta_analyst', name: 'Meta Analyst', description: 'Analyzed 5+ tournament decks', unlocked: false },
   { id: 'profile_creator', name: 'Identity Established', description: 'Created your tamer profile', unlocked: false },
+  { id: 'deck_builder', name: 'Deck Architect', description: 'Built your first deck', unlocked: false },
   { id: 'evolution_master', name: 'Evolution Master', description: 'Reached 150+ total activity', unlocked: false },
 ];
 
@@ -184,6 +185,9 @@ export function useAuth() {
           break;
         case 'profile_creator':
           shouldUnlock = profile.tamerName !== null && profile.tamerName.length > 0;
+          break;
+        case 'deck_builder':
+          shouldUnlock = currentStats.decksAnalyzed >= 1;
           break;
         case 'evolution_master':
           shouldUnlock = (currentStats.cardsViewed + currentStats.decksAnalyzed + currentStats.pagesVisited) >= 150;
