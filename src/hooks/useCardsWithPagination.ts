@@ -1,198 +1,152 @@
-import { useState, useEffect, useCallback } from 'react';
-import { 
-  collection, 
-  query, 
-  where, 
-  orderBy, 
-  limit, 
-  startAfter,
-  getDocs, 
-  QueryConstraint,
-  DocumentSnapshot,
-  getCountFromServer
-} from 'firebase/firestore';
-import { db } from '../utils/firebase';
-import { DigimonCard, CardFilters, UseCardsResult, PaginationState } from '../utils/types';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { PostgrestError } from '@supabase/supabase-js';
+import { supabase } from '../utils/supabase';
+import { DigimonCard, CardFilters } from '../utils/types';
+
+interface UseCardsResult {
+  cards: DigimonCard[];
+  loading: boolean;
+  loadingMore: boolean;
+  error: string | null;
+  hasMore: boolean;
+  searchCards: (query: string) => Promise<void>;
+  loadMore: () => Promise<void>;
+  totalCount: number;
+}
 
 const CARDS_PER_PAGE = 20;
 
-const CACHE_KEY = 'digideck_cards_cache';
-const CACHE_EXPIRY = 24 * 60 * 60 * 1000; // 24 hours
-
-export function useCardsWithPagination(filters: CardFilters & { fetchAll?: boolean } = {}): UseCardsResult {
+export function useCardsWithPagination(filters: CardFilters = {}): UseCardsResult {
   const [cards, setCards] = useState<DigimonCard[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [lastDoc, setLastDoc] = useState<DocumentSnapshot | null>(null);
-  const [pagination, setPagination] = useState<PaginationState>({
-    page: 1,
-    limit: CARDS_PER_PAGE,
-    hasMore: true,
-    total: 0
-  });
+  const [hasMore, setHasMore] = useState(true);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
 
-  // Check cache first
-  const getCachedCards = (): DigimonCard[] | null => {
-    try {
-      const cached = localStorage.getItem(CACHE_KEY);
-      if (cached) {
-        const { data, timestamp } = JSON.parse(cached);
-        if (Date.now() - timestamp < CACHE_EXPIRY) {
-          return data;
-        }
-      }
-    } catch (err) {
-      console.warn('Failed to read cache:', err);
-    }
-    return null;
-  };
+  // Memoize the filter conditions to prevent unnecessary query rebuilds
+  const filterConditions = useMemo(() => ({
+    type: filters.type,
+    color: filters.color,
+    set: filters.set,
+    searchTerm: filters.searchTerm
+  }), [filters.type, filters.color, filters.set, filters.searchTerm]);
 
-  // Save to cache
-  const setCachedCards = (cardsData: DigimonCard[]) => {
-    try {
-      localStorage.setItem(CACHE_KEY, JSON.stringify({
-        data: cardsData,
-        timestamp: Date.now()
-      }));
-    } catch (err) {
-      console.warn('Failed to cache cards:', err);
-    }
-  };
-
-  const buildQuery = useCallback((isFirstPage: boolean = true): [any, QueryConstraint[]] => {
-    const constraints: QueryConstraint[] = [];
-    
-    if (filters.type) {
-      constraints.push(where('type', '==', filters.type));
-    }
-    if (filters.color) {
-      constraints.push(where('color', 'array-contains', filters.color));
-    }
-    if (filters.set) {
-      constraints.push(where('set', 'array-contains', filters.set));
-    }
-    if (filters.rarity) {
-      constraints.push(where('rarity', '==', filters.rarity));
-    }
-    
-    constraints.push(orderBy('name'));
-    
-    // For deck builder, fetch all cards once
-    // For regular browsing, use pagination
-    if (!filters.fetchAll) {
-      constraints.push(limit(CARDS_PER_PAGE));
-    }
-    
-    if (!isFirstPage && lastDoc && !filters.fetchAll) {
-      constraints.push(startAfter(lastDoc));
-    }
-
-    const collectionRef = collection(db, 'cards');
-    const q = query(collectionRef, ...constraints);
-    
-    return [q, constraints];
-  }, [filters, lastDoc]);
-
-  const fetchCards = useCallback(async (isFirstPage: boolean = true) => {
-    try {
+  const fetchCards = useCallback(async (page = 0, append = false) => {
+    if (append) {
+      setLoadingMore(true);
+    } else {
       setLoading(true);
-      setError(null);
+    }
+    setError(null);
 
-      // Check cache first for fetchAll requests
-      if (filters.fetchAll && isFirstPage) {
-        const cachedCards = getCachedCards();
-        if (cachedCards) {
-          setCards(cachedCards);
-          setPagination(prev => ({ 
-            ...prev, 
-            total: cachedCards.length,
-            hasMore: false
-          }));
-          setLoading(false);
-          return;
-        }
+    try {
+      // Build the base query
+      let query = supabase
+        .from('cards')
+        .select('*', { count: 'exact' });
+
+      // Apply filters
+      if (filterConditions.type) {
+        query = query.eq('type', filterConditions.type);
+      }
+      if (filterConditions.color) {
+        query = query.contains('color', [filterConditions.color]);
+      }
+      if (filterConditions.set) {
+        query = query.contains('set_names', [filterConditions.set]);
       }
 
-      const [q] = buildQuery(isFirstPage);
-      const snapshot = await getDocs(q);
-      
-      if (snapshot.empty && isFirstPage) {
-        setCards([]);
-        setPagination(prev => ({ ...prev, hasMore: false, total: 0 }));
-        return;
+      // Apply search with improved text search
+      if (filterConditions.searchTerm?.trim()) {
+        query = query.or(`name.ilike.%${filterConditions.searchTerm}%,effects.ilike.%${filterConditions.searchTerm}%`);
       }
 
-      const newCards = snapshot.docs.map(doc => {
-        const data = doc.data() as any;
-        return {
-          id: doc.id,
-          ...data,
-          createdAt: data.createdAt?.toDate() || new Date(),
-          updatedAt: data.updatedAt?.toDate() || new Date(),
-        };
-      }) as DigimonCard[];
-
-      // For search, do additional client-side filtering for contains matching
-      const filteredCards = filters.searchTerm
-        ? newCards.filter(card => 
-            card.name.toLowerCase().includes(filters.searchTerm!.toLowerCase())
-          )
-        : newCards;
-      
-      const displayCards = filteredCards;
-
-      if (isFirstPage) {
-        setCards(displayCards);
-        setPagination(prev => ({ 
-          ...prev, 
-          page: 1, 
-          total: filters.fetchAll ? displayCards.length : 0,
-          hasMore: !filters.fetchAll && displayCards.length === CARDS_PER_PAGE
-        }));
-        
-        // Cache all cards when fetchAll is true
-        if (filters.fetchAll) {
-          setCachedCards(displayCards);
-        }
-      } else {
-        setCards(prev => [...prev, ...displayCards]);
-        setPagination(prev => ({ 
-          ...prev, 
-          page: prev.page + 1,
-          hasMore: displayCards.length === CARDS_PER_PAGE
-        }));
+      // Get total count first
+      const { count } = await query;
+      if (count !== null) {
+        setTotalCount(count);
       }
 
-      setLastDoc(snapshot.docs[snapshot.docs.length - 1] as any || null);
+      // Apply pagination and ordering
+      query = query
+        .order('name')
+        .range(page * CARDS_PER_PAGE, (page + 1) * CARDS_PER_PAGE - 1);
+
+      const { data, error } = await query;
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      if (!data) {
+        throw new Error('No data returned from the server');
+      }
+
+      const transformedCards = data.map(card => ({
+        id: card.id,
+        name: card.name,
+        cardNumber: card.card_number,
+        type: card.type,
+        form: card.form,
+        level: card.level,
+        image: card.image,
+        effects: card.effects,
+        color: card.color || [],
+        set: card.set_names || [],
+        rarity: card.rarity,
+        keywords: card.keywords || [],
+        playCost: card.play_cost,
+        evolutionCost: card.evolution_cost,
+        dp: card.dp,
+        traits: card.traits || [],
+        attribute: card.attribute,
+        createdAt: new Date(card.created_at),
+        updatedAt: new Date(card.updated_at)
+      }));
+
+      setCards(prev => append ? [...prev, ...transformedCards] : transformedCards);
+      setHasMore(transformedCards.length === CARDS_PER_PAGE);
+
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch cards');
+      const errorMessage = err instanceof Error ? err.message : 
+        err instanceof PostgrestError ? err.message :
+        'Failed to fetch cards';
+      setError(errorMessage);
+      setHasMore(false);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
-  }, [buildQuery, filters.searchTerm]);
+  }, [filterConditions]);
 
-  const loadMore = useCallback(() => {
-    if (!loading && pagination.hasMore) {
-      fetchCards(false);
-    }
-  }, [fetchCards, loading, pagination.hasMore]);
-
-  const refresh = useCallback(() => {
-    setLastDoc(null);
-    setPagination(prev => ({ ...prev, page: 1, hasMore: true }));
-    fetchCards(true);
+  const searchCards = useCallback(async (query: string) => {
+    setCurrentPage(0);
+    await fetchCards(0, false);
   }, [fetchCards]);
 
-  useEffect(() => {
-    refresh();
-  }, [filters.type, filters.color, filters.set, filters.rarity, filters.searchTerm]);
+  const loadMore = useCallback(async () => {
+    if (!hasMore || loading || loadingMore) return;
+    const nextPage = currentPage + 1;
+    setCurrentPage(nextPage);
+    await fetchCards(nextPage, true);
+  }, [fetchCards, currentPage, hasMore, loading, loadingMore]);
 
-  return {
-    cards,
-    loading,
-    error,
-    pagination,
+  // Reset and fetch cards when filters change
+  useEffect(() => {
+    setCurrentPage(0);
+    fetchCards(0, false);
+  }, [filterConditions, fetchCards]);
+
+  return { 
+    cards, 
+    loading, 
+    error, 
+    hasMore, 
+    loadingMore, 
+    searchCards, 
     loadMore,
-    refresh
+    totalCount 
   };
 }

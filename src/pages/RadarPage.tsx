@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Container, Title, Text, Select, Group, Loader, Center, Stack, Grid, Card, Badge, Progress, Box } from '@mantine/core';
 import { IconRadar, IconMapPin, IconTarget } from '@tabler/icons-react';
-import { useMetaSets, useSetDecks } from '../hooks/useFirestore';
+import { useMetaSets, useSetDecks } from '../hooks/useSupabaseFirestore';
 import { MetaSet } from '../utils/types';
 
 const COLORS = ['#00d2d3', '#ff6b35', '#8b5cf6', '#fbbf24', '#ef4444', '#10b981'];

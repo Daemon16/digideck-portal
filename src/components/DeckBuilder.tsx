@@ -1,13 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Stack, Group, TextInput, Button, Grid, Card, Text, Badge,
-  NumberInput, Image, Center, Loader, Alert, Tabs
+  Image, Center, Loader, Alert, Tabs
 } from '@mantine/core';
 import { IconSearch, IconPlus, IconMinus, IconCards, IconEdit, IconArrowUp } from '@tabler/icons-react';
 import { useCardsWithPagination } from '../hooks/useCardsWithPagination';
-import { UserDeck, DigimonCard, DeckCard } from '../utils/types';
+import { UserDeck, DigimonCard, DeckCard, CardFilters } from '../utils/types';
 import { getCardRestriction, getMaxCopies } from '../utils/banlist';
-import ScrollToTop from './ScrollToTop';
 
 interface DeckBuilderProps {
   deck: UserDeck;
@@ -17,35 +16,24 @@ interface DeckBuilderProps {
 
 export default function DeckBuilder({ deck, onSave, onClose }: DeckBuilderProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [displayLimit, setDisplayLimit] = useState(20);
   const [currentDeck, setCurrentDeck] = useState<UserDeck>({
     ...deck,
     name: deck.name || 'Untitled Deck'
   });
-  const { cards: allCards, loading } = useCardsWithPagination({ fetchAll: true });
-  
-  const filteredCards = searchTerm 
-    ? allCards.filter(card => 
-        card.name.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    : allCards;
-    
-  const cards = filteredCards.slice(0, displayLimit);
-  const hasMoreCards = filteredCards.length > displayLimit;
-  
-  const loadMoreCards = () => {
-    setDisplayLimit(prev => prev + 20);
-  };
-  
-  // Reset display limit when search changes
-  useEffect(() => {
-    setDisplayLimit(20);
-  }, [searchTerm]);
+
+  // Create filters for card search
+  const filters: CardFilters = useMemo(() => ({
+    searchTerm: searchTerm
+  }), [searchTerm]);
+
+  const { cards, loading, loadingMore, hasMore, loadMore } = useCardsWithPagination(filters);
+
+  const hasMoreCards = hasMore;
 
 
 
-  const isDigitama = (card: any) => 
-    card.form === 'In-Training' || card.type === 'Digi-Egg' || card.level === 2;
+  const isDigitama = (card: DigimonCard | DeckCard) => 
+    card.form === 'In-Training' || card.level === 2;
   
   const mainDeckCards = currentDeck.cards.filter(card => !isDigitama(card));
   const eggDeckCards = currentDeck.cards.filter(card => isDigitama(card));
@@ -287,15 +275,17 @@ export default function DeckBuilder({ deck, onSave, onClose }: DeckBuilderProps)
               </Grid>
             )}
             
-            {hasMoreCards && (
+            {(hasMoreCards || loadingMore) && (
               <Center mt={20}>
                 <Group>
                   <Button
-                    onClick={loadMoreCards}
+                    onClick={loadMore}
                     variant="outline"
                     color="cyan"
+                    loading={loadingMore}
+                    disabled={loadingMore}
                   >
-                    Load More ({filteredCards.length - displayLimit} remaining)
+                    {loadingMore ? 'Loading More Cards...' : 'Load More Cards'}
                   </Button>
                   <Button
                     onClick={() => {

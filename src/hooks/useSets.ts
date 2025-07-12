@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { supabase } from '../utils/supabase';
 
 interface DigimonSet {
   code: string;
@@ -13,19 +14,29 @@ export function useSets() {
   useEffect(() => {
     async function fetchSets() {
       try {
-        // Try to fetch from digimoncard.dev API
-        const response = await fetch('https://digimoncard.dev/api/sets');
-        if (response.ok) {
-          const data = await response.json();
-          const formattedSets = data.map((set: any) => ({
-            code: set.code,
-            name: `${set.code} - ${set.name}`,
-            category: getCategoryFromCode(set.code)
-          }));
-          setSets(formattedSets);
-        } else {
-          throw new Error('API not available');
-        }
+        // Get unique set names from cards table
+        const { data, error } = await supabase
+          .from('cards')
+          .select('set_names')
+          .not('set_names', 'is', null);
+          
+        if (error) throw error;
+        
+        // Extract unique sets
+        const uniqueSets = new Set<string>();
+        data.forEach(card => {
+          if (card.set_names && Array.isArray(card.set_names)) {
+            card.set_names.forEach(setName => uniqueSets.add(setName));
+          }
+        });
+        
+        const setsData = Array.from(uniqueSets).map(setName => ({
+          code: setName.split(' ')[0] || setName,
+          name: setName,
+          category: getCategoryFromCode(setName.split(' ')[0] || setName)
+        }));
+        
+        setSets(setsData.sort((a, b) => a.code.localeCompare(b.code)));
       } catch (error) {
         // Fallback to hardcoded comprehensive list
         setSets(getHardcodedSets());

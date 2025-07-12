@@ -21,8 +21,7 @@ import {
 } from '@mantine/core';
 import { IconArrowLeft, IconTrophy, IconCalendar, IconMapPin, IconUser, IconHash, IconStack, IconTarget, IconShare, IconDownload, IconLink } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
-import { doc, getDoc, collection, query, where, getDocs, limit } from 'firebase/firestore';
-import { db } from '../utils/firebase';
+import { supabase } from '../utils/supabase';
 import { DetailedDeck, DeckCard, MetaSet } from '../utils/types';
 
 export default function DeckDetailsPage() {
@@ -41,38 +40,49 @@ export default function DeckDetailsPage() {
       
       try {
         setLoading(true);
-        const deckDoc = await getDoc(doc(db, 'metaDecks', deckId));
         
-        if (deckDoc.exists()) {
-          const data = deckDoc.data();
-          const deckData = {
-            id: deckDoc.id,
-            ...data,
-            date: data.date instanceof Date ? data.date : (data.date?.toDate?.() || new Date()),
-            createdAt: data.createdAt instanceof Date ? data.createdAt : (data.createdAt?.toDate?.() || new Date()),
-            updatedAt: data.updatedAt instanceof Date ? data.updatedAt : (data.updatedAt?.toDate?.() || new Date()),
-          } as DetailedDeck;
+        const { data: deckData, error } = await supabase
+          .from('meta_decks')
+          .select('*')
+          .eq('id', deckId)
+          .single();
           
-          setDeck(deckData);
-          
-          // Find the related set
-          if (data.setId) {
-            const setsQuery = query(
-              collection(db, 'metaSets'),
-              where('setId', '==', data.setId),
-              limit(1)
-            );
-            const setsSnapshot = await getDocs(setsQuery);
-            if (!setsSnapshot.empty) {
-              const setDoc = setsSnapshot.docs[0];
-              setRelatedSet({
-                id: setDoc.id,
-                ...setDoc.data()
-              } as MetaSet);
-            }
+        if (error) throw error;
+        
+        const deck = {
+          id: deckData.id,
+          archetype: deckData.archetype,
+          player: deckData.player,
+          placement: deckData.placement,
+          region: deckData.region,
+          tournament: deckData.tournament,
+          date: deckData.date ? new Date(deckData.date) : null,
+          setId: deckData.set_id,
+          totalCards: deckData.total_cards,
+          cards: deckData.cards || [],
+          createdAt: new Date(deckData.created_at),
+          updatedAt: new Date(deckData.created_at)
+        };
+        
+        setDeck(deck);
+        
+        // Find related set
+        if (deckData.set_id) {
+          const { data: setData } = await supabase
+            .from('meta_sets')
+            .select('*')
+            .eq('set_id', deckData.set_id)
+            .single();
+            
+          if (setData) {
+            setRelatedSet({
+              id: setData.id,
+              name: setData.name,
+              setId: setData.set_id,
+              totalDecks: setData.total_decks,
+              createdAt: new Date(setData.created_at)
+            });
           }
-        } else {
-          setError('Deck not found');
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load deck');

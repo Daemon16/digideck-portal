@@ -18,7 +18,7 @@ import {
   Button,
 } from '@mantine/core';
 import { IconTrophy, IconCalendar, IconMapPin, IconUsers, IconArrowLeft } from '@tabler/icons-react';
-import { useMetaSets, useSetDecks, useSetStats } from '../hooks/useFirestore';
+import { useMetaSets, useSetDecks, useSetStats } from '../hooks/useSupabaseFirestore';
 import { MetaSet } from '../utils/types';
 
 export default function MetaPage() {

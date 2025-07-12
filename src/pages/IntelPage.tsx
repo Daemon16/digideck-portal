@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { TrendingUp, BarChart3, PieChart as PieChartIcon, Activity } from 'lucide-react';
-import { useMetaSets, useSetDecks } from '../hooks/useFirestore';
+import { useMetaSets, useSetDecks } from '../hooks/useSupabaseFirestore';
 import { MetaSet } from '../utils/types';
 import { Container, Title, Text, Select, Group, Loader, Center, Stack } from '@mantine/core';
 

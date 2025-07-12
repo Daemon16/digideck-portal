@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Container, Title, Text, Button, Grid, Card, Group, Stack, Badge,
@@ -12,7 +12,7 @@ import { UserDeck } from '../utils/types';
 import DeckBuilder from '../components/DeckBuilder';
 
 export default function MyDecksPage() {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const { decks, loading, createDeck, updateDeck, deleteDeck } = useUserDecks();
   const [selectedDeck, setSelectedDeck] = useState<UserDeck | null>(null);
   const [isBuilderOpen, setIsBuilderOpen] = useState(false);

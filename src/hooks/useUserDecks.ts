@@ -1,17 +1,5 @@
 import { useState, useEffect } from 'react';
-import { 
-  collection, 
-  query, 
-  where, 
-  orderBy, 
-  onSnapshot, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  doc,
-  serverTimestamp 
-} from 'firebase/firestore';
-import { db } from '../utils/firebase';
+import { supabase } from '../utils/supabase';
 import { useAuth } from './useAuth';
 import { UserDeck, DeckCard } from '../utils/types';
 
@@ -20,32 +8,42 @@ export function useUserDecks() {
   const [loading, setLoading] = useState(true);
   const { user, incrementActivity } = useAuth();
 
-  useEffect(() => {
+  const fetchDecks = async () => {
     if (!user) {
       setDecks([]);
       setLoading(false);
       return;
     }
 
-    const q = query(
-      collection(db, 'userDecks'),
-      where('userId', '==', user.uid),
-      orderBy('updatedAt', 'desc')
-    );
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const userDecks = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate() || new Date(),
-        updatedAt: doc.data().updatedAt?.toDate() || new Date(),
-      })) as UserDeck[];
+    try {
+      const { data, error } = await supabase
+        .from('user_decks')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('updated_at', { ascending: false });
+        
+      if (error) throw error;
       
-      setDecks(userDecks);
+      const transformedDecks = data.map(deck => ({
+        id: deck.id,
+        name: deck.name,
+        description: deck.description,
+        format: deck.format,
+        cards: deck.cards || [],
+        createdAt: new Date(deck.created_at),
+        updatedAt: new Date(deck.updated_at)
+      }));
+      
+      setDecks(transformedDecks);
+    } catch (error) {
+      console.error('Error fetching decks:', error);
+    } finally {
       setLoading(false);
-    });
+    }
+  };
 
-    return unsubscribe;
+  useEffect(() => {
+    fetchDecks();
   }, [user]);
 
   const createDeck = async (deckData: {
@@ -56,28 +54,35 @@ export function useUserDecks() {
     if (!user) return null;
 
     try {
-      const newDeck = {
-        userId: user.uid,
-        name: deckData.name,
-        description: deckData.description,
-        format: deckData.format,
-        cards: [] as DeckCard[],
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      };
-
-      const docRef = await addDoc(collection(db, 'userDecks'), newDeck);
+      const { data, error } = await supabase
+        .from('user_decks')
+        .insert({
+          user_id: user.id,
+          name: deckData.name,
+          description: deckData.description,
+          format: deckData.format,
+          cards: []
+        })
+        .select()
+        .single();
+        
+      if (error) throw error;
       
       // Trigger deck builder achievement
       incrementActivity && incrementActivity('decksAnalyzed');
       
-      return {
-        id: docRef.id,
-        ...newDeck,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        cards: []
-      } as UserDeck;
+      const newDeck = {
+        id: data.id,
+        name: data.name,
+        description: data.description,
+        format: data.format,
+        cards: data.cards || [],
+        createdAt: new Date(data.created_at),
+        updatedAt: new Date(data.updated_at)
+      };
+      
+      setDecks(prev => [newDeck, ...prev]);
+      return newDeck;
     } catch (error) {
       console.error('Error creating deck:', error);
       return null;
@@ -86,26 +91,19 @@ export function useUserDecks() {
 
   const updateDeck = async (deck: UserDeck): Promise<void> => {
     try {
-      const deckRef = doc(db, 'userDecks', deck.id);
+      const { error } = await supabase
+        .from('user_decks')
+        .update({
+          name: deck.name,
+          description: deck.description,
+          cards: deck.cards,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', deck.id);
+        
+      if (error) throw error;
       
-      // Filter out undefined values from cards
-      const cleanCards = deck.cards.map(card => ({
-        cardId: card.cardId,
-        name: card.name,
-        quantity: card.quantity,
-        ...(card.cardNumber && { cardNumber: card.cardNumber }),
-        ...(card.type && { type: card.type }),
-        ...(card.form && { form: card.form }),
-        ...(card.level !== undefined && { level: card.level }),
-        ...(card.image && { image: card.image })
-      }));
-      
-      await updateDoc(deckRef, {
-        name: deck.name,
-        description: deck.description,
-        cards: cleanCards,
-        updatedAt: serverTimestamp(),
-      });
+      setDecks(prev => prev.map(d => d.id === deck.id ? { ...deck, updatedAt: new Date() } : d));
     } catch (error) {
       console.error('Error updating deck:', error);
     }
@@ -113,7 +111,14 @@ export function useUserDecks() {
 
   const deleteDeck = async (deckId: string): Promise<void> => {
     try {
-      await deleteDoc(doc(db, 'userDecks', deckId));
+      const { error } = await supabase
+        .from('user_decks')
+        .delete()
+        .eq('id', deckId);
+        
+      if (error) throw error;
+      
+      setDecks(prev => prev.filter(d => d.id !== deckId));
     } catch (error) {
       console.error('Error deleting deck:', error);
     }

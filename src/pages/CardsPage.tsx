@@ -61,6 +61,12 @@ export default function CardsPage(): JSX.Element {
     
     return () => clearTimeout(timer);
   }, [searchTerm]);
+
+  // Initial load with empty filters
+  useEffect(() => {
+    // This will trigger an initial load without any filters
+    setDebouncedSearchTerm('');
+  }, []); // Empty dependency array means this runs once on mount
   
   // Reset pagination when filters change
   useEffect(() => {
@@ -72,52 +78,19 @@ export default function CardsPage(): JSX.Element {
     type: typeFilter || undefined,
     color: colorFilter || undefined,
     set: setFilter || undefined,
-    fetchAll: true // Fetch all cards for client-side filtering
-  }), [typeFilter, colorFilter, setFilter]);
+    searchTerm: debouncedSearchTerm
+  }), [typeFilter, colorFilter, setFilter, debouncedSearchTerm]);
   
-  const { cards, loading, error, pagination, loadMore } = useCardsWithPagination(filters);
+  const { cards, loading, error, hasMore, loadingMore, loadMore, totalCount } = useCardsWithPagination(filters);
   
-  // Client-side filtering
-  const filteredCards = useMemo(() => {
-    let filtered = cards;
-    
-    if (debouncedSearchTerm) {
-      filtered = filtered.filter(card => 
-        card.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
-      );
-    }
-    
-    return filtered;
-  }, [cards, debouncedSearchTerm]);
-  
-  // Display cards with lazy loading
-  const displayedCards = filteredCards.slice(0, displayLimit);
-  const hasMoreCards = filteredCards.length > displayLimit;
-  
-  const loadMoreCards = () => {
-    setDisplayLimit(prev => prev + 20);
-  };
-  
-  // Reset display limit when filters change
-  useEffect(() => {
-    setDisplayLimit(20);
-  }, [debouncedSearchTerm, typeFilter, colorFilter, setFilter]);
+  const displayedCards = cards;
+  const hasMoreCards = hasMore;
   const { sets, loading: setsLoading } = useSets();
   
-  const handleLoadMore = useCallback(() => {
-    if (pagination.hasMore && !loading) {
-      // Store current scroll position
-      const scrollPosition = window.scrollY;
-      loadMore();
-      // Restore scroll position after a brief delay
-      setTimeout(() => {
-        window.scrollTo(0, scrollPosition);
-      }, 50);
-    }
-  }, [loadMore, pagination.hasMore, loading]);
+
 
   // Only show full page loader on initial load, not during search
-  if (loading && filteredCards.length === 0 && !debouncedSearchTerm && !typeFilter && !colorFilter && !setFilter) {
+  if (loading && displayedCards.length === 0 && !debouncedSearchTerm && !typeFilter && !colorFilter && !setFilter) {
     return (
       <Container size="xl" pt={80}>
         <Center h={400}>
@@ -179,7 +152,7 @@ export default function CardsPage(): JSX.Element {
             Card Database
           </Title>
           <Text c="dimmed" size="lg">
-            Search through {pagination.total > 0 ? pagination.total : cards.length} live Digimon TCG cards with advanced filters
+            Search through {cards.length}+ live Digimon TCG cards with advanced filters
           </Text>
         </Stack>
       </motion.div>
@@ -247,23 +220,6 @@ export default function CardsPage(): JSX.Element {
                   { value: 'White', label: 'White' }
                 ]}
                 w={{ base: 100, sm: 150 }}
-                styles={{
-                  dropdown: {
-                    backgroundColor: 'var(--mantine-color-dark-7)',
-                    border: '1px solid var(--mantine-color-dark-4)'
-                  },
-                  option: {
-                    color: 'var(--mantine-color-gray-1)',
-                    '&[data-selected]': {
-                      backgroundColor: 'var(--mantine-color-blue-6)',
-                      color: 'white'
-                    },
-                    '&[data-hovered]': {
-                      backgroundColor: 'var(--mantine-color-dark-5)',
-                      color: 'white'
-                    }
-                  }
-                }}
               />
               
               <Select
@@ -276,23 +232,6 @@ export default function CardsPage(): JSX.Element {
                 ]}
                 disabled={setsLoading}
                 w={{ base: 100, sm: 150 }}
-                styles={{
-                  dropdown: {
-                    backgroundColor: 'var(--mantine-color-dark-7)',
-                    border: '1px solid var(--mantine-color-dark-4)'
-                  },
-                  option: {
-                    color: 'var(--mantine-color-gray-1)',
-                    '&[data-selected]': {
-                      backgroundColor: 'var(--mantine-color-blue-6)',
-                      color: 'white'
-                    },
-                    '&[data-hovered]': {
-                      backgroundColor: 'var(--mantine-color-dark-5)',
-                      color: 'white'
-                    }
-                  }
-                }}
               />
               </Group>
               
@@ -349,11 +288,13 @@ export default function CardsPage(): JSX.Element {
         <Center mt={32}>
           <Group>
             <Button
-              onClick={loadMoreCards}
+              onClick={loadMore}
               variant="gradient"
               gradient={{ from: 'blue', to: 'cyan' }}
+              loading={loadingMore}
+              disabled={loadingMore}
             >
-              Load More ({filteredCards.length - displayLimit} remaining)
+              {loadingMore ? 'Loading More Cards...' : 'Load More Cards'}
             </Button>
             <Button
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}

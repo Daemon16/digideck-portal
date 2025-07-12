@@ -1,14 +1,6 @@
-import { useState, useEffect } from 'react';
-import { 
-  User, 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword, 
-  signOut, 
-  onAuthStateChanged,
-  updateProfile
-} from 'firebase/auth';
-import { doc, getDoc, setDoc, updateDoc, increment } from 'firebase/firestore';
-import { auth, db } from '../utils/firebase';
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '../utils/supabase';
+import type { User } from '@supabase/supabase-js';
 
 interface UserProfile {
   uid: string;
@@ -44,94 +36,155 @@ export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setUser(user);
+    let mounted = true;
+    
+    const initAuth = async () => {
+      try {
+        // Get initial session
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!mounted) return;
+        
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          await loadUserProfile(session.user.id);
+        } else {
+          setProfile(null);
+        }
+        setLoading(false);
+      } catch (error) {
+        console.error('Auth initialization error:', error);
+        setLoading(false);
+      }
+    };
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!mounted) return;
       
-      if (user) {
-        await loadUserProfile(user.uid);
-      } else {
+      setUser(session?.user ?? null);
+      
+      if (session?.user && event === 'SIGNED_IN') {
+        await loadUserProfile(session.user.id);
+      } else if (event === 'SIGNED_OUT') {
         setProfile(null);
       }
-      
-      setLoading(false);
     });
 
-    return unsubscribe;
+    initAuth();
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
-  const loadUserProfile = async (uid: string) => {
+  const loadUserProfile = useCallback(async (uid: string) => {
+    if (profileLoading) return; // Prevent multiple simultaneous calls
+    
+    setProfileLoading(true);
     try {
-      const profileDoc = await getDoc(doc(db, 'users', uid));
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('user_id', uid)
+        .single();
       
-      if (profileDoc.exists()) {
-        const data = profileDoc.data();
+      if (data && !error) {
         setProfile({
-          ...data,
-          joinDate: data.joinDate.toDate(),
-          achievements: data.achievements.map((a: any) => ({
-            ...a,
-            unlockedAt: a.unlockedAt ? a.unlockedAt.toDate() : undefined
-          }))
-        } as UserProfile);
-      } else {
-        // Create new profile
-        const newProfile: UserProfile = {
-          uid,
-          email: auth.currentUser?.email || '',
-          tamerName: auth.currentUser?.displayName || '',
-          joinDate: new Date(),
-          stats: {
-            cardsViewed: 0,
-            decksAnalyzed: 0,
-            pagesVisited: 1
-          },
-          achievements: defaultAchievements
-        };
-        
-        await setDoc(doc(db, 'users', uid), newProfile);
-        setProfile(newProfile);
-        
-        // Check achievements after creating profile (for profile_creator achievement)
-        setTimeout(() => checkAchievements(), 100);
+          uid: data.user_id,
+          email: data.email,
+          tamerName: data.tamer_name,
+          joinDate: new Date(data.join_date),
+          stats: data.stats,
+          achievements: data.achievements || defaultAchievements
+        });
+      } else if (error?.code === 'PGRST116') {
+        // No profile exists, create one (only if we have a valid session)
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          const newProfile = {
+            user_id: uid,
+            email: session.user.email || '',
+            tamer_name: session.user.user_metadata?.display_name || '',
+            join_date: new Date().toISOString(),
+            stats: {
+              cardsViewed: 0,
+              decksAnalyzed: 0,
+              pagesVisited: 1
+            },
+            achievements: defaultAchievements
+          };
+          
+          const { error: insertError } = await supabase.from('user_profiles').insert([newProfile]);
+          if (!insertError) {
+            setProfile({
+              uid: uid,
+              email: newProfile.email,
+              tamerName: newProfile.tamer_name,
+              joinDate: new Date(newProfile.join_date),
+              stats: newProfile.stats,
+              achievements: newProfile.achievements
+            });
+          }
+        }
       }
     } catch (error) {
       console.error('Error loading profile:', error);
+    } finally {
+      setProfileLoading(false);
     }
-  };
+  }, [profileLoading]);
 
   const signUp = async (email: string, password: string, tamerName: string) => {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    await updateProfile(userCredential.user, { displayName: tamerName });
-    return userCredential.user;
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          display_name: tamerName
+        }
+      }
+    });
+    if (error) throw error;
+    return data.user;
   };
 
   const signIn = async (email: string, password: string) => {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    return userCredential.user;
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+    if (error) throw error;
+    return data.user;
   };
 
   const logout = async () => {
-    await signOut(auth);
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
   };
 
   const incrementActivity = async (type: 'cardsViewed' | 'decksAnalyzed' | 'pagesVisited') => {
-    if (!user || !profile) return;
+    if (!user?.id || !profile) return;
 
     try {
-      const userRef = doc(db, 'users', user.uid);
-      await updateDoc(userRef, {
-        [`stats.${type}`]: increment(1)
-      });
+      const newStats = {
+        ...profile.stats,
+        [type]: profile.stats[type] + 1
+      };
+
+      await supabase
+        .from('user_profiles')
+        .update({ stats: newStats })
+        .eq('user_id', user.id);
 
       // Update local state
       setProfile(prev => prev ? {
         ...prev,
-        stats: {
-          ...prev.stats,
-          [type]: prev.stats[type] + 1
-        }
+        stats: newStats
       } : null);
 
       // Check achievements
@@ -142,15 +195,13 @@ export function useAuth() {
   };
 
   const updateTamerName = async (newTamerName: string) => {
-    if (!user || !profile) return;
+    if (!user?.id || !profile) return;
 
     try {
-      // Update Firebase Auth profile
-      await updateProfile(user, { displayName: newTamerName });
-      
-      // Update Firestore profile
-      const userRef = doc(db, 'users', user.uid);
-      await updateDoc(userRef, { tamerName: newTamerName });
+      await supabase
+        .from('user_profiles')
+        .update({ tamer_name: newTamerName })
+        .eq('user_id', user.id);
       
       // Update local state
       setProfile(prev => prev ? { ...prev, tamerName: newTamerName } : null);
@@ -163,7 +214,7 @@ export function useAuth() {
   };
 
   const checkAchievements = async () => {
-    if (!user || !profile) return;
+    if (!user?.id || !profile) return;
 
     const updatedAchievements = [...profile.achievements];
     let hasUpdates = false;
@@ -202,8 +253,10 @@ export function useAuth() {
     });
 
     if (hasUpdates) {
-      const userRef = doc(db, 'users', user.uid);
-      await updateDoc(userRef, { achievements: updatedAchievements });
+      await supabase
+        .from('user_profiles')
+        .update({ achievements: updatedAchievements })
+        .eq('user_id', user.id);
       setProfile(prev => prev ? { ...prev, achievements: updatedAchievements } : null);
     }
   };
