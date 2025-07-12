@@ -19,15 +19,16 @@ export function useUserDecks() {
       const { data, error } = await supabase
         .from('user_decks')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', user?.id || '')
         .order('updated_at', { ascending: false });
         
       if (error) throw error;
       
-      const transformedDecks = data.map(deck => ({
+      const transformedDecks: UserDeck[] = data.map(deck => ({
         id: deck.id,
         name: deck.name,
         description: deck.description,
+        userId: deck.user_id,
         format: deck.format,
         cards: deck.cards || [],
         createdAt: new Date(deck.created_at),
@@ -46,43 +47,46 @@ export function useUserDecks() {
     fetchDecks();
   }, [user]);
 
-  const createDeck = async (deckData: {
-    name: string;
-    description: string;
-    format: string;
-  }): Promise<UserDeck | null> => {
+  const createDeck = async (params: { name: string; description?: string; format?: string }): Promise<UserDeck | null> => {
     if (!user) return null;
 
+    const newDeck: Omit<UserDeck, 'id' | 'createdAt' | 'updatedAt'> = {
+      name: params.name,
+      description: params.description,
+      userId: user.id,
+      format: params.format || 'standard',
+      cards: []
+    };
+
     try {
-      const { data, error } = await supabase
+      const { data: deck, error } = await supabase
         .from('user_decks')
-        .insert({
-          user_id: user.id,
-          name: deckData.name,
-          description: deckData.description,
-          format: deckData.format,
-          cards: []
-        })
+        .insert([{
+          name: newDeck.name,
+          description: newDeck.description,
+          user_id: newDeck.userId,
+          format: newDeck.format,
+          cards: newDeck.cards
+        }])
         .select()
         .single();
-        
+
       if (error) throw error;
-      
-      // Trigger deck builder achievement
-      incrementActivity && incrementActivity('decksAnalyzed');
-      
-      const newDeck = {
-        id: data.id,
-        name: data.name,
-        description: data.description,
-        format: data.format,
-        cards: data.cards || [],
-        createdAt: new Date(data.created_at),
-        updatedAt: new Date(data.updated_at)
+
+      const transformedDeck: UserDeck = {
+        id: deck.id,
+        name: deck.name,
+        description: deck.description,
+        userId: deck.user_id,
+        format: deck.format,
+        cards: deck.cards || [],
+        createdAt: new Date(deck.created_at),
+        updatedAt: new Date(deck.updated_at)
       };
+
+      setDecks(prev => [transformedDeck, ...prev]);
+      return transformedDeck;
       
-      setDecks(prev => [newDeck, ...prev]);
-      return newDeck;
     } catch (error) {
       console.error('Error creating deck:', error);
       return null;

@@ -71,18 +71,33 @@ export interface UserDeck {
   updatedAt: Date;
 }
 
-export interface DetailedDeck extends TournamentDeck {
-  deckProfile: string;
-  country: string;
-  host: string;
+export interface DetailedDeck {
+  id: string;
+  name: string;
+  archetype: string;
+  player: string;
+  placement: number;
+  region: string;
+  tournament: string;
+  date: Date;
+  format: TournamentFormat;
+  cards: DeckCard[];
+  totalCards: number;
+  setId: string;
+  createdAt: Date;
+  updatedAt: Date;
+  // Optional fields from tournament data
+  deckProfile?: string;
+  country?: string;
+  host?: string;
   detailsUrl?: string;
-  cardBreakdown: {
+  cardBreakdown?: {
     digimon: DeckCard[];
     tamers: DeckCard[];
     options: DeckCard[];
   };
   strategy?: string;
-  keyCards: string[];
+  keyCards?: string[];
   winCondition?: string;
 }
 

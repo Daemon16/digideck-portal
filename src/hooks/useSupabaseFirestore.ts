@@ -16,12 +16,13 @@ export function useMetaSets() {
           
         if (error) throw error;
         
-        const transformedSets = sets.map(set => ({
+        const transformedSets: MetaSet[] = sets.map(set => ({
           id: set.id,
           name: set.name,
           setId: set.set_id,
           totalDecks: set.total_decks,
-          createdAt: new Date(set.created_at)
+          createdAt: new Date(set.created_at),
+          updatedAt: new Date(set.updated_at)
         }));
         
         setData(transformedSets);
@@ -70,18 +71,30 @@ export function useSetDecks(selectedSet?: MetaSet, options: { region?: string; l
       
       if (error) throw error;
       
-      const transformedDecks = decks.map(deck => ({
+      const transformedDecks: DetailedDeck[] = decks.map(deck => ({
         id: deck.id,
+        name: deck.name,
         archetype: deck.archetype,
         player: deck.player,
         placement: deck.placement,
         region: deck.region,
         tournament: deck.tournament,
-        date: deck.date ? new Date(deck.date) : null,
-        setId: deck.set_id,
-        totalCards: deck.total_cards,
+        date: new Date(deck.date),
+        format: deck.format || 'standard',
         cards: deck.cards || [],
-        createdAt: new Date(deck.created_at)
+        totalCards: deck.total_cards,
+        setId: deck.set_id,
+        createdAt: new Date(deck.created_at),
+        updatedAt: new Date(deck.updated_at),
+        // Optional fields
+        deckProfile: deck.deck_profile,
+        country: deck.country,
+        host: deck.host,
+        detailsUrl: deck.details_url,
+        cardBreakdown: deck.card_breakdown,
+        strategy: deck.strategy,
+        keyCards: deck.key_cards || [],
+        winCondition: deck.win_condition
       }));
       
       if (reset) {

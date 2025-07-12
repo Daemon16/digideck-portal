@@ -36,53 +36,64 @@ export default function DeckDetailsPage() {
 
   useEffect(() => {
     async function fetchDeck() {
-      if (!deckId) return;
+      if (!deckId) {
+        setError('No deck ID provided');
+        setLoading(false);
+        return;
+      }
       
       try {
-        setLoading(true);
-        
-        const { data: deckData, error } = await supabase
-          .from('meta_decks')
-          .select('*')
+        const { data: deck, error } = await supabase
+          .from('tournament_decks')
+          .select('*, meta_sets(*)')
           .eq('id', deckId)
           .single();
-          
+
         if (error) throw error;
-        
-        const deck = {
-          id: deckData.id,
-          archetype: deckData.archetype,
-          player: deckData.player,
-          placement: deckData.placement,
-          region: deckData.region,
-          tournament: deckData.tournament,
-          date: deckData.date ? new Date(deckData.date) : null,
-          setId: deckData.set_id,
-          totalCards: deckData.total_cards,
-          cards: deckData.cards || [],
-          createdAt: new Date(deckData.created_at),
-          updatedAt: new Date(deckData.created_at)
+
+        if (!deck) {
+          setError('Deck not found');
+          setLoading(false);
+          return;
+        }
+
+        const transformedDeck: DetailedDeck = {
+          id: deck.id,
+          name: deck.name,
+          archetype: deck.archetype,
+          player: deck.player,
+          placement: deck.placement,
+          region: deck.region,
+          tournament: deck.tournament,
+          date: new Date(deck.date),
+          format: deck.format,
+          cards: deck.cards || [],
+          totalCards: deck.total_cards,
+          setId: deck.set_id,
+          createdAt: new Date(deck.created_at),
+          updatedAt: new Date(deck.updated_at),
+          deckProfile: deck.deck_profile,
+          country: deck.country,
+          host: deck.host,
+          detailsUrl: deck.details_url,
+          cardBreakdown: deck.card_breakdown,
+          strategy: deck.strategy,
+          keyCards: deck.key_cards || [],
+          winCondition: deck.win_condition
         };
+
+        setDeck(transformedDeck);
         
-        setDeck(deck);
-        
-        // Find related set
-        if (deckData.set_id) {
-          const { data: setData } = await supabase
-            .from('meta_sets')
-            .select('*')
-            .eq('set_id', deckData.set_id)
-            .single();
-            
-          if (setData) {
-            setRelatedSet({
-              id: setData.id,
-              name: setData.name,
-              setId: setData.set_id,
-              totalDecks: setData.total_decks,
-              createdAt: new Date(setData.created_at)
-            });
-          }
+        if (deck.meta_sets) {
+          const setData = deck.meta_sets;
+          setRelatedSet({
+            id: setData.id,
+            name: setData.name,
+            setId: setData.set_id,
+            totalDecks: setData.total_decks,
+            createdAt: new Date(setData.created_at),
+            updatedAt: new Date(setData.updated_at)
+          });
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load deck');
