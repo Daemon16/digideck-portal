@@ -6,47 +6,81 @@ interface DigitalPortalProps {
   onComplete: () => void;
 }
 
-const BINARY_STRINGS = [
-  '01100101', '11010010', '10011100', '00110101',
-  '11001010', '10101011', '01011010', '11100101'
-];
+interface RainDrop {
+  id: number;
+  x: number;
+  y: number;
+  speed: number;
+  value: string;
+  brightness: number;
+}
+
+const NUM_DROPS = 40;
 
 export default function DigitalPortal({ onComplete }: DigitalPortalProps) {
   const [stage, setStage] = useState<'initializing' | 'analyzing' | 'connecting' | 'complete'>('initializing');
-  const [codeStrings, setCodeStrings] = useState<string[]>([]);
-  const portalRef = useRef<HTMLDivElement>(null);
+  const [rainDrops, setRainDrops] = useState<RainDrop[]>([]);
   const [glitchActive, setGlitchActive] = useState(false);
+  const animationRef = useRef<number>();
+
+  // Generate random binary string
+  const generateBinaryString = () => {
+    const length = Math.floor(Math.random() * 3) + 3; // 3-5 characters
+    return Array.from({ length }, () => 
+      Math.random() > 0.5 ? '1' : '0'
+    ).join('');
+  };
+
+  // Create a new raindrop
+  const createRainDrop = (id: number) => ({
+    id,
+    x: Math.random() * 100,
+    y: -20,
+    speed: 0.08 + Math.random() * 0.12, // Slower speed between 0.08 and 0.2
+    value: generateBinaryString(),
+    brightness: 0.3 + Math.random() * 0.7 // Random brightness between 0.3 and 1
+  });
 
   useEffect(() => {
+    // Initialize raindrops with staggered starting positions
+    setRainDrops(Array.from({ length: NUM_DROPS }, (_, i) => ({
+      ...createRainDrop(i),
+      y: Math.random() * 100 // Start at random positions
+    })));
+
     // Stage transitions
-    const timeline = [
-      { stage: 'analyzing', delay: 2000 },
-      { stage: 'connecting', delay: 4000 },
-      { stage: 'complete', delay: 6000 },
-      { action: onComplete, delay: 7000 }
-    ];
+    const timer1 = setTimeout(() => setStage('analyzing'), 2000);
+    const timer2 = setTimeout(() => setStage('connecting'), 4000);
+    const timer3 = setTimeout(() => setStage('complete'), 6000);
+    const timer4 = setTimeout(() => onComplete(), 7000);
 
-    timeline.forEach(({ stage, action, delay }) => {
-      const timer = setTimeout(() => {
-        if (stage) setStage(stage as any);
-        if (action) action();
-      }, delay);
-      return () => clearTimeout(timer);
-    });
+    // Animation loop for raindrops
+    const updateRaindrops = () => {
+      setRainDrops(drops => 
+        drops.map(drop => {
+          const newY = drop.y + drop.speed;
+          
+          // If drop is off screen, reset it to top
+          if (newY > 120) {
+            return {
+              ...createRainDrop(drop.id),
+              y: -20
+            };
+          }
+          
+          return {
+            ...drop,
+            y: newY,
+            // Very occasionally change the value
+            value: Math.random() > 0.99 ? generateBinaryString() : drop.value
+          };
+        })
+      );
+      
+      animationRef.current = requestAnimationFrame(updateRaindrops);
+    };
 
-    // Binary code animation
-    const interval = setInterval(() => {
-      setCodeStrings(prev => {
-        const newStrings = [...prev];
-        if (newStrings.length < 20) {
-          newStrings.push(BINARY_STRINGS[Math.floor(Math.random() * BINARY_STRINGS.length)]);
-        } else {
-          newStrings.shift();
-          newStrings.push(BINARY_STRINGS[Math.floor(Math.random() * BINARY_STRINGS.length)]);
-        }
-        return newStrings;
-      });
-    }, 200);
+    animationRef.current = requestAnimationFrame(updateRaindrops);
 
     // Glitch effect
     const glitchInterval = setInterval(() => {
@@ -55,8 +89,14 @@ export default function DigitalPortal({ onComplete }: DigitalPortalProps) {
     }, 3000);
 
     return () => {
-      clearInterval(interval);
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+      clearTimeout(timer3);
+      clearTimeout(timer4);
       clearInterval(glitchInterval);
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
     };
   }, [onComplete]);
 
@@ -68,25 +108,24 @@ export default function DigitalPortal({ onComplete }: DigitalPortalProps) {
       
       {/* Binary Rain */}
       <div className="binary-container">
-        {codeStrings.map((str, i) => (
-          <motion.div
-            key={`${i}-${str}`}
-            className="binary-string"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: [0, 1, 0], y: 20 }}
-            transition={{ duration: 2 }}
+        {rainDrops.map((drop) => (
+          <div
+            key={drop.id}
+            className="rain-drop"
             style={{
-              left: `${(i % 10) * 10}%`,
-              animationDelay: `${i * 0.1}s`
+              left: `${drop.x}%`,
+              top: `${drop.y}%`,
+              opacity: drop.brightness,
+              color: `rgba(0, 210, 211, ${drop.brightness})`
             }}
           >
-            {str}
-          </motion.div>
+            {drop.value}
+          </div>
         ))}
       </div>
 
       {/* Main Portal */}
-      <div className="portal-wrapper" ref={portalRef}>
+      <div className="portal-wrapper">
         {/* Energy Field */}
         <motion.div
           className="energy-field"
