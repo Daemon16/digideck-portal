@@ -22,12 +22,12 @@ import {
 import { IconArrowLeft, IconTrophy, IconCalendar, IconMapPin, IconUser, IconHash, IconStack, IconTarget, IconShare, IconDownload, IconLink } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { supabase } from '../utils/supabase';
-import { DetailedDeck, DeckCard, MetaSet } from '../utils/types';
+import { DetailedDeck, DeckCard, MetaSet, TournamentDeck, DigimonColor } from '../utils/types';
 
 export default function DeckDetailsPage() {
   const { deckId } = useParams<{ deckId: string }>();
   const navigate = useNavigate();
-  const [deck, setDeck] = useState<DetailedDeck | null>(null);
+  const [deck, setDeck] = useState<TournamentDeck | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -43,13 +43,14 @@ export default function DeckDetailsPage() {
       }
       
       try {
-        const { data: deck, error } = await supabase
-          .from('tournament_decks')
-          .select('*, meta_sets(*)')
+        // First fetch the deck details
+        const { data: deck, error: deckError } = await supabase
+          .from('meta_decks')
+          .select('*')
           .eq('id', deckId)
           .single();
 
-        if (error) throw error;
+        if (deckError) throw deckError;
 
         if (!deck) {
           setError('Deck not found');
@@ -57,7 +58,41 @@ export default function DeckDetailsPage() {
           return;
         }
 
-        const transformedDeck: DetailedDeck = {
+        // Then fetch associated meta set if set_id exists
+        if (deck.set_id) {
+          const { data: metaSet, error: metaError } = await supabase
+            .from('meta_sets')
+            .select('*')
+            .eq('set_id', deck.set_id)
+            .single();
+
+          if (!metaError && metaSet) {
+            setRelatedSet({
+              id: metaSet.id,
+              name: metaSet.name,
+              setId: metaSet.set_id,
+              totalDecks: metaSet.total_decks,
+              createdAt: new Date(metaSet.created_at),
+              updatedAt: new Date(metaSet.updated_at)
+            });
+          }
+        }
+
+        // Split cards into main deck and egg deck
+        const allCards = deck.cards || [];
+        const mainDeck = allCards.filter(card => 
+          !(card.form === 'In-Training' || (card.type as string) === 'Digi-Egg' || card.level === 2)
+        );
+        const eggDeck = allCards.filter(card => 
+          card.form === 'In-Training' || (card.type as string) === 'Digi-Egg' || card.level === 2
+        );
+
+        // Extract unique colors from cards
+        const colors = Array.from(new Set(
+          allCards.flatMap(card => card.color || [])
+        )) as DigimonColor[];
+
+        const transformedDeck: TournamentDeck = {
           id: deck.id,
           name: deck.name,
           archetype: deck.archetype,
@@ -66,36 +101,19 @@ export default function DeckDetailsPage() {
           region: deck.region,
           tournament: deck.tournament,
           date: new Date(deck.date),
-          format: deck.format,
-          cards: deck.cards || [],
-          totalCards: deck.total_cards,
-          setId: deck.set_id,
+          format: deck.format || 'standard',
+          cards: allCards,
+          mainDeck,
+          eggDeck,
+          totalCards: deck.total_cards || allCards.reduce((sum, card) => sum + card.quantity, 0),
+          colors,
           createdAt: new Date(deck.created_at),
-          updatedAt: new Date(deck.updated_at),
-          deckProfile: deck.deck_profile,
-          country: deck.country,
-          host: deck.host,
-          detailsUrl: deck.details_url,
-          cardBreakdown: deck.card_breakdown,
-          strategy: deck.strategy,
-          keyCards: deck.key_cards || [],
-          winCondition: deck.win_condition
+          updatedAt: new Date(deck.updated_at)
         };
 
         setDeck(transformedDeck);
-        
-        if (deck.meta_sets) {
-          const setData = deck.meta_sets;
-          setRelatedSet({
-            id: setData.id,
-            name: setData.name,
-            setId: setData.set_id,
-            totalDecks: setData.total_decks,
-            createdAt: new Date(setData.created_at),
-            updatedAt: new Date(setData.updated_at)
-          });
-        }
       } catch (err) {
+        console.error('Error fetching deck:', err);
         setError(err instanceof Error ? err.message : 'Failed to load deck');
       } finally {
         setLoading(false);
