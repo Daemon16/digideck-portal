@@ -1,102 +1,211 @@
-import React, { useRef } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { Points, PointMaterial, Line } from '@react-three/drei';
+import React, { useRef, useMemo, useEffect } from 'react';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { Points, PointMaterial, Line, Instance, Instances, AdaptiveDpr, AdaptiveEvents } from '@react-three/drei';
 import * as THREE from 'three';
 
 function CircuitLines() {
   const groupRef = useRef<THREE.Group>(null);
+  const linesRef = useRef<THREE.LineSegments[]>([]);
   
-  useFrame((state) => {
-    if (groupRef.current) {
-      groupRef.current.rotation.z = state.clock.elapsedTime * 0.02;
-    }
-  });
-  
-  const circuitPaths = [
+  const circuitPaths = useMemo(() => [
     [[-8, 4, -10], [-4, 4, -10], [-4, 2, -10], [0, 2, -10], [0, -2, -10], [4, -2, -10]],
     [[6, 3, -8], [6, -1, -8], [2, -1, -8], [2, -4, -8], [-2, -4, -8]],
     [[-6, 1, -12], [-6, -3, -12], [-2, -3, -12], [-2, 1, -12], [2, 1, -12]]
-  ];
+  ], []);
+
+  // Create geometry once and reuse
+  const materials = useMemo(() => [
+    new THREE.LineBasicMaterial({ color: '#00d4ff', transparent: true, opacity: 0.3 }),
+    new THREE.LineBasicMaterial({ color: '#ff6600', transparent: true, opacity: 0.3 })
+  ], []);
+
+  useEffect(() => {
+    // Cleanup materials on unmount
+    return () => {
+      materials.forEach(material => material.dispose());
+    };
+  }, [materials]);
+  
+  useFrame((state) => {
+    if (groupRef.current) {
+      // Smoother rotation with sine wave modulation
+      const rotationSpeed = Math.sin(state.clock.elapsedTime * 0.1) * 0.01 + 0.02;
+      groupRef.current.rotation.z += rotationSpeed;
+    }
+  });
   
   return (
     <group ref={groupRef}>
-      {circuitPaths.map((points, i) => (
-        <Line
-          key={i}
-          points={points.map(p => [p[0], p[1], p[2]] as [number, number, number])}
-          color={i % 2 === 0 ? '#00d4ff' : '#ff6600'}
-          lineWidth={2}
-          transparent
-          opacity={0.3}
-        />
-      ))}
+      {circuitPaths.map((points, i) => {
+        const positions = points.flatMap((point, index) => {
+          if (index === points.length - 1) return [];
+          const nextPoint = points[index + 1];
+          return [...point, ...nextPoint];
+        });
+
+        return (
+          <line key={i}>
+            <bufferGeometry>
+              <bufferAttribute
+                attach="attributes-position"
+                count={positions.length / 3}
+                array={new Float32Array(positions)}
+                itemSize={3}
+              />
+            </bufferGeometry>
+            <lineBasicMaterial attach="material" {...materials[i % 2]} />
+          </line>
+        );
+      })}
     </group>
   );
 }
 
 function DataStreams() {
   const pointsRef = useRef<THREE.Points>(null);
+  const { viewport } = useThree();
   
-  const particleCount = 150;
-  const positions = new Float32Array(particleCount * 3);
-  
-  for (let i = 0; i < particleCount; i++) {
-    positions[i * 3] = (Math.random() - 0.5) * 25;
-    positions[i * 3 + 1] = (Math.random() - 0.5) * 15;
-    positions[i * 3 + 2] = (Math.random() - 0.5) * 25;
-  }
+  // Create particle positions with proper distribution
+  const [positions, colors] = useMemo(() => {
+    const particleCount = 200;
+    const positions = new Float32Array(particleCount * 3);
+    const colors = new Float32Array(particleCount * 3);
+    const color1 = new THREE.Color('#00ffff');
+    const color2 = new THREE.Color('#0088ff');
+    
+    for (let i = 0; i < particleCount; i++) {
+      // Spherical distribution for more natural look
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos((Math.random() * 2) - 1);
+      const r = 15 + Math.random() * 10; // Radius between 15 and 25
+      
+      positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+      positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+      positions[i * 3 + 2] = r * Math.cos(phi);
+      
+      // Interpolate between two colors based on height
+      const lerpFactor = (positions[i * 3 + 1] + 15) / 30;
+      const finalColor = color1.clone().lerp(color2, lerpFactor);
+      colors[i * 3] = finalColor.r;
+      colors[i * 3 + 1] = finalColor.g;
+      colors[i * 3 + 2] = finalColor.b;
+    }
+    
+    return [positions, colors];
+  }, []);
   
   useFrame((state) => {
     if (pointsRef.current) {
       pointsRef.current.rotation.y = state.clock.elapsedTime * 0.03;
+      
+      // Add subtle wave motion
+      const vertices = (pointsRef.current.geometry as THREE.BufferGeometry).attributes.position.array as Float32Array;
+      for (let i = 0; i < vertices.length; i += 3) {
+        const x = vertices[i];
+        const z = vertices[i + 2];
+        vertices[i + 1] += Math.sin(state.clock.elapsedTime + x * 0.1) * 0.01;
+      }
+      (pointsRef.current.geometry as THREE.BufferGeometry).attributes.position.needsUpdate = true;
     }
   });
   
   return (
-    <Points ref={pointsRef} positions={positions} stride={3} frustumCulled={false}>
-      <PointMaterial
+    <points ref={pointsRef} frustumCulled>
+      <bufferGeometry>
+        <bufferAttribute
+          attach="attributes-position"
+          count={positions.length / 3}
+          array={positions}
+          itemSize={3}
+        />
+        <bufferAttribute
+          attach="attributes-color"
+          count={colors.length / 3}
+          array={colors}
+          itemSize={3}
+        />
+      </bufferGeometry>
+      <pointsMaterial
+        size={0.05}
+        sizeAttenuation
+        vertexColors
         transparent
-        color="#00ffff"
-        size={0.03}
-        sizeAttenuation={true}
+        opacity={0.6}
         depthWrite={false}
-        opacity={0.4}
+        blending={THREE.AdditiveBlending}
       />
-    </Points>
+    </points>
+  );
+}
+
+function FloatingPanel({ index }: { index: number }) {
+  const ref = useRef<THREE.Mesh>();
+  const initialPosition = useMemo(() => [
+    Math.cos(index * Math.PI / 2) * 6,
+    Math.sin(index * 0.5) * 2,
+    Math.sin(index * Math.PI / 2) * 6
+  ] as const, [index]);
+  
+  useFrame((state) => {
+    if (ref.current) {
+      // Individual panel animations
+      ref.current.position.y = initialPosition[1] + Math.sin(state.clock.elapsedTime * 0.3 + index) * 0.5;
+      ref.current.rotation.z = Math.sin(state.clock.elapsedTime * 0.2 + index) * 0.1;
+      // Glowing effect through opacity
+      (ref.current.material as THREE.MeshBasicMaterial).opacity = 
+        0.2 + Math.sin(state.clock.elapsedTime * 0.5 + index) * 0.1;
+    }
+  });
+
+  return (
+    <Instance 
+      ref={ref}
+      position={initialPosition as [number, number, number]}
+      rotation={[0, index * Math.PI / 4, 0]}
+    />
   );
 }
 
 function FloatingPanels() {
-  const groupRef = useRef<THREE.Group>(null);
+  const groupRef = useRef<THREE.Group>();
+  const geometry = useMemo(() => new THREE.PlaneGeometry(2, 3), []);
+  const materials = useMemo(() => [
+    new THREE.MeshBasicMaterial({ 
+      color: '#0f1419', 
+      transparent: true, 
+      opacity: 0.2,
+      side: THREE.DoubleSide,
+      wireframe: true
+    }),
+    new THREE.MeshBasicMaterial({ 
+      color: '#1a1f2e', 
+      transparent: true, 
+      opacity: 0.2,
+      side: THREE.DoubleSide,
+      wireframe: true
+    })
+  ], []);
+
+  useEffect(() => {
+    return () => {
+      geometry.dispose();
+      materials.forEach(material => material.dispose());
+    };
+  }, [geometry, materials]);
   
   useFrame((state) => {
     if (groupRef.current) {
       groupRef.current.rotation.y = state.clock.elapsedTime * 0.05;
-      groupRef.current.position.y = Math.sin(state.clock.elapsedTime * 0.3) * 0.5;
     }
   });
-  
+
   return (
     <group ref={groupRef}>
-      {[...Array(4)].map((_, i) => (
-        <mesh 
-          key={i} 
-          position={[
-            Math.cos(i * Math.PI / 2) * 6, 
-            Math.sin(i * 0.5) * 2, 
-            Math.sin(i * Math.PI / 2) * 6
-          ]}
-          rotation={[0, i * Math.PI / 4, 0]}
-        >
-          <planeGeometry args={[2, 3]} />
-          <meshBasicMaterial 
-            color={i % 2 === 0 ? '#0f1419' : '#1a1f2e'} 
-            transparent 
-            opacity={0.2}
-            wireframe
-          />
-        </mesh>
-      ))}
+      <Instances range={4} geometry={geometry} material={materials[0]}>
+        {Array.from({ length: 4 }).map((_, i) => (
+          <FloatingPanel key={i} index={i} />
+        ))}
+      </Instances>
     </group>
   );
 }
