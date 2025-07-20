@@ -60,7 +60,7 @@ export function useSetDecks(selectedSet?: MetaSet, options: { region?: string; l
       }
       
       query = query
-        .order('placement')
+        .order('date', { ascending: false })
         .limit(options.limit || 12);
         
       if (!reset && data.length > 0) {
